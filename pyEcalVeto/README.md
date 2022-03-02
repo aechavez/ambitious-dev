@@ -16,7 +16,7 @@ Example bdtMaker command to train a BDT model:
 ```
 ldmx python3 bdtMaker.py -s <path_to_combined_signal_training_file> -b <path_to_bkg_file>
 ```
-You will get a warning from XGBoost, but everything should work. The BDT takes some time to train, so I suggest training and testing on ~100 event background and signal samples first just to see how it works
+You will get a warning from XGBoost, but everything should work. The BDT takes some time to train, so I suggest training and evaluating on ~100 event background and signal samples first just to see how it works
 
 Example bdtEval command to evaluate a trained model on testing samples:
 ```
