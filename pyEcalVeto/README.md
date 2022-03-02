@@ -2,7 +2,7 @@
 
 ## Purpose: Faster development and eliminates the need for `ldmx-analysis` and other dependencies
 ## Requirements: Working install of `ldmx-sw-v2.3.0` or greater and `v12` samples
-##       +     Only tested with a container including `numpy`, `xgboost`, and `matplotlib` packages
+## Only tested with a container including `numpy`, `xgboost`, and `matplotlib` packages
 
 Currently set to run the segmentation + MIP tracking BDT
 
@@ -16,7 +16,7 @@ Example bdtMaker command to train a BDT model:
 ```
 ldmx python3 bdtMaker.py -s <path_to_combined_signal_training_file> -b <path_to_bkg_file>
 ```
-You will get a warning from XGBoost, but everything is fine; it's working. The BDT usually takes some time to train, so I would suggest training and testing on ~100 event background and signal samples first just to see how it works
+You will get a warning from XGBoost, but everything should work. The BDT takes some time to train, so I suggest training and testing on ~100 event background and signal samples first just to see how it works
 
 Example bdtEval command to evaluate a trained model on testing samples:
 ```
