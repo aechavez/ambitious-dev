@@ -1,56 +1,21 @@
+import argparse
+import glob
+import numpy as np
 import os
-import sys
 import ROOT as r
-import numpy as np # ?
+import sys
 
 
-#TODO: Make options for no output or based on input
-#TODO: Make nolists independant for in and out
-
-###################################
-# Constants
-###################################
-
-# ROOT colors
-colors = {
-        'kBlue': 600,
-        'kGreen': 417,
-        'kMagenta': 616,
-        'kOrange': 807, # +7
-        'kBlack': 1,
-        'kYellow': 400,
-        'kViolet': 880,
-        'kRed': 632,
-        'kCyan': 432
-        }
-
-# For easier loops
-color_list = [colors[key] for key in colors]
-
-# ROOT 1D/2D line styles
-lineStyles = {
-        'kSolid': 1,
-        'kDashed': 2,
-        'kDotted': 3,
-        'kDashDotted': 4
-        }
-
-# For easier loops
-lineStyle_list = [i for i in range(1,11)]
-
-
-###################################
-# Classes
-###################################
+###############################################
+# Class to help process event samples
+###############################################
 
 class TreeProcess:
 
-    # For analysing .root samples
+    def __init__(self, event_process, group = [], tree = None, tree_name = None, ID = '',\
+            color = 1, strEvent = 0, maxEvents = -1, pfreq = 1000, batch = False, extrafs = None):
 
-    def __init__(self, event_process, group=[], tree=None, tree_name = None, ID = '',\
-            color=1, strEvent=0, maxEvents=-1, pfreq=1000, batch=False, extrafs=None):
-
-        print('\nPreparing {}'.format(ID))
+        print('\n[ INFO ] - Preparing tree with ID: {}'.format(ID))
 
         self.event_process = event_process
         self.group_files = group
@@ -164,9 +129,12 @@ class TreeProcess:
             print( 'Removing tmp directory %s' % self.tmp_dir )
             os.system('rm -rf %s' % self.tmp_dir)
 
-class TreeMaker:
 
-    # To write a tree in an analysis process
+##########################################
+# Class to help write to a TTree
+##########################################
+
+class TreeMaker:
 
     def __init__(self, outfile, tree_name, branches_info = {}, outdir=''):
 
@@ -231,20 +199,6 @@ class TreeMaker:
 
             print( 'cp %s %s' % (self.outfile,self.outdir) )
             os.system('cp %s %s' % (self.outfile,self.outdir))
-
-class Histogram:
-
-    # Just to hold histogram-related stuff and make other py code nicer
-
-    def __init__(self, hist, title='', xlabel='x', ylabel='y',\
-            color=1, lineStyle=1, fillStyle=1):
-        self.hist = hist
-        self.title = title
-        self.xlabel = xlabel
-        self.ylabel = ylabel
-        self.color = color
-        self.lineStyle = lineStyle
-        self.fillStyle = fillStyle
 
 
 ###################################
