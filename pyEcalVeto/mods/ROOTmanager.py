@@ -24,8 +24,8 @@ class TreeProcess:
         self.name_tag = name_tag
         self.start_event = start_event
         self.max_events = max_events
-        self.max_event = self.start_event + self.max_events
-        self.event_count = self.start_event
+        self.max_event = start_event + max_events
+        self.event_count = start_event
         self.print_frequency = print_frequency
         self.batch_mode = batch_mode
         self.closing_functions = closing_functions
