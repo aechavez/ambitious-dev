@@ -12,46 +12,45 @@ import sys
 
 class TreeProcess:
 
-    def __init__(self, event_process, group = [], tree = None, tree_name = None, ID = '',\
-            color = 1, strEvent = 0, maxEvents = -1, pfreq = 1000, batch = False, extrafs = None):
+    def __init__(self, process_event, file_group = [], tree = None, tree_name = None, name_tag = '',
+                 start_event = 0, max_events = -1, print_frequency = 1000, batch_mode = False, closing_functions = None):
 
-        print('\n[ INFO ] - Preparing tree with ID: {}'.format(ID))
+        print('\n[ INFO ] - Preparing tree with name tag: {}'.format(name_tag))
 
-        self.event_process = event_process
-        self.group_files = group
+        self.process_event = process_event
+        self.files = file_group
         self.tree = tree
         self.tree_name = tree_name
-        self.ID = ID
-        self.color = color
-        self.strEvent = strEvent
-        self.maxEvents = maxEvents
-        self.pfreq = pfreq
-        self.batch = batch
-        self.extrafs = extrafs
+        self.name_tag = name_tag
+        self.start_event = start_event
+        self.max_events = max_events
+        self.print_frequency = print_frequency
+        self.batch_mode = batch_mode
+        self.closing_functions = closing_functions
         self.cwd = os.getcwd()
-        
-        # Build tree amd move operations to a scratch directory
-        # if providing group_files instead of a tree
 
+        # Move to a scratch directory if providing a file group
         self.mvd = False
-        if self.tree == None:
+        if self.tree is None:
             self.mvd = True
 
             # Create the scratch directory if it doesn't already exist
             scratch_dir = self.cwd + '/scratch'
-            print( 'Using scratch path %s' % scratch_dir )
+            print('\n[ INFO ] - Using scratch path: {}'.format(scratch_dir))
             if not os.path.exists(scratch_dir):
                 os.makedirs(scratch_dir)
 
-            # Get tmp num
-            num=0; check = True
+            # Assign a temporary number to this process
+            num = 0
+            check = True
             while check:
-                if os.path.exists( scratch_dir+'/tmp_'+str(num) ):
+                if os.path.exists('{}/tmp_{}'.format(scratch_dir, num)):
                     num += 1
                 else:
                     check = False 
 
-            # Create and mv into tmp directory that can be used to copy files into
+            ### LEFT OFF HERE ###
+            # Create and move into the temporary directory
             if self.batch:
                 self.tmp_dir='%s/%s' % (scratch_dir, os.environ['LSB_JOBID'])
             else:
