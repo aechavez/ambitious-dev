@@ -12,10 +12,10 @@ import sys
 
 class TreeProcess:
 
-    def __init__(self, process_event, file_group = [], tree = None, tree_name = None, name_tag = '',
+    def __init__(self, process_event, file_group = [], tree = None, tree_name = 'LDMX_Events', name_tag = 'tree_process',
                  start_event = 0, max_events = -1, print_frequency = 1000, batch_mode = False, closing_functions = None):
 
-        print('\n[ INFO ] - Preparing tree with name tag: {}'.format(name_tag))
+        print('\n[ INFO ] - Preparing tree process with name tag: {}'.format(name_tag))
 
         self.process_event = process_event
         self.file_group = file_group
@@ -24,16 +24,21 @@ class TreeProcess:
         self.name_tag = name_tag
         self.start_event = start_event
         self.max_events = max_events
-        self.max_event = None
-        self.event_count = None
+        self.max_event = self.start_event + self.max_events
+        self.event_count = self.start_event
         self.print_frequency = print_frequency
         self.batch_mode = batch_mode
         self.closing_functions = closing_functions
         self.main_directory = os.getcwd()
 
+        if not ((len(self.file_group) == 0 and not (self.tree is None))\
+                or (len(self.file_group) > 0 and self.tree is None)):
+            print('\n[ ERROR ] - Must provide either a file group or a tree!')
+            sys.exit(1)
+
         # Move to a scratch directory if providing a file group
         self.use_scratch = False
-        if self.tree is None:
+        if len(self.file_group) > 0 and self.tree is None:
             self.use_scratch = True
 
             # Create the scratch directory if it doesn't already exist
@@ -71,20 +76,13 @@ class TreeProcess:
             fns = [f.split('/')[-1] for f in self.file_group]
 
             # Load the files
-            if not (self.tree_name is None):
-                self.tree = load(fns, self.tree_name)
-            else:
-                self.tree = load(fns)
+            self.tree = load(fns, self.tree_name)
 
             # Move back to the main directory
             os.chdir(self.main_directory)
 
     # Method to add a new branch
     def add_branch(self, ldmx_class, branch_name):
-
-        if self.tree is None:
-            print('\n[ ERROR ] - A tree needs to be set before attempting to add a branch!')
-            sys.exit(1)
 
         if ldmx_class == 'EventHeader': branch = r.ldmx.EventHeader()
         elif ldmx_class == 'EcalVetoResult': branch = r.ldmx.EcalVetoResult()
@@ -96,21 +94,28 @@ class TreeProcess:
         self.tree.SetBranchAddress(branch_name, r.AddressOf(branch))
 
         return branch
- 
+
     # Method to process events
     def run(self, start_event = 0, max_events = -1, print_frequency = 1000):
 
         print('\n[ INFO ] - Starting event process')
 
-        # Reset some attributes if needed
+        # Reset some attributes if desired
         if start_event != self.start_event: self.start_event = start_event
         if max_events != self.max_events: self.max_events = max_events
-        if self.max_events == -1 or self.start_event + self.max_events > self.tree.GetEntries():
-            self.max_events = self.tree.GetEntries() - self.start_event
-        self.max_event = self.start_event + self.max_events
         if print_frequency != self.print_frequency: self.print_frequency = print_frequency
 
+        # start_event should be between 0 and tree->GetEntries()
+        if self.start_event < 0: self.start_event = 0
+        elif self.start_event > self.tree.GetEntries() - 1: self.start_event = self.tree.GetEntries() - 1
+
+        # max_events should be between 1 and tree->GetEntries() - start_event
+        if self.max_events < 1 or self.max_events > self.tree.GetEntries() - self.start_event:
+            self.max_events = self.tree.GetEntries() - self.start_event
+
+        self.max_event = self.start_event + self.max_events
         self.event_count = self.start_event
+
         while self.event_count < self.max_event:
             self.tree.GetEntry(self.event_count)
             if self.event_count%self.print_frequency == 0:
