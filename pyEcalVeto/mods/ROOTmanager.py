@@ -84,7 +84,7 @@ class TreeProcess:
 
         if self.tree is None:
             print('\n[ ERROR ] - A tree needs to be set before attempting to add a branch!')
-            sys.exit()
+            sys.exit(1)
 
         if ldmx_class == 'EventHeader': branch = r.ldmx.EventHeader()
         elif ldmx_class == 'EcalVetoResult': branch = r.ldmx.EcalVetoResult()
