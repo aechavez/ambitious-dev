@@ -6,9 +6,9 @@ import ROOT as r
 import sys
 
 
-###############################################
-# Class to help process event samples
-###############################################
+###################################
+# Class to process events
+###################################
 
 class TreeProcess:
 
@@ -18,25 +18,27 @@ class TreeProcess:
         print('\n[ INFO ] - Preparing tree with name tag: {}'.format(name_tag))
 
         self.process_event = process_event
-        self.files = file_group
+        self.file_group = file_group
         self.tree = tree
         self.tree_name = tree_name
         self.name_tag = name_tag
         self.start_event = start_event
         self.max_events = max_events
+        self.max_event = None
+        self.event_count = None
         self.print_frequency = print_frequency
         self.batch_mode = batch_mode
         self.closing_functions = closing_functions
-        self.cwd = os.getcwd()
+        self.main_directory = os.getcwd()
 
         # Move to a scratch directory if providing a file group
-        self.mvd = False
+        self.use_scratch = False
         if self.tree is None:
-            self.mvd = True
+            self.use_scratch = True
 
             # Create the scratch directory if it doesn't already exist
-            scratch_dir = self.cwd + '/scratch'
-            print('\n[ INFO ] - Using scratch path: {}'.format(scratch_dir))
+            scratch_dir = '{}/scratch'.format(self.main_directory)
+            print('\n[ INFO ] - Using scratch directory: {}'.format(scratch_dir))
             if not os.path.exists(scratch_dir):
                 os.makedirs(scratch_dir)
 
@@ -49,89 +51,90 @@ class TreeProcess:
                 else:
                     check = False 
 
-            ### LEFT OFF HERE ###
-            # Create and move into the temporary directory
-            if self.batch:
-                self.tmp_dir='%s/%s' % (scratch_dir, os.environ['LSB_JOBID'])
+            # Create and move to the temporary directory
+            if self.batch_mode:
+                self.temporary_directory = '{}/{}'.format(scratch_dir, os.environ['LSB_JOBID'])
             else:
-                self.tmp_dir = '%s/%s' % (scratch_dir, 'tmp_'+str(num))
-            if not os.path.exists(self.tmp_dir):
-                print( 'Creating tmp directory %s' % self.tmp_dir )
-            os.makedirs(self.tmp_dir)
-            os.chdir(self.tmp_dir)
-    
-            # Copy input files to the tmp directory
-            print( 'Copying input files into tmp directory' )
-            for rfilename in self.group_files:
-                os.system("cp %s ." % rfilename )
-            os.system("ls .")
-    
-            # Just get the file names without the full path
-            tmpfiles = [f.split('/')[-1] for f in self.group_files]
-    
-            # Load'em
-            if self.tree_name != None:
-                self.tree = load(tmpfiles, self.tree_name)
+                self.temporary_directory = '{}/tmp_{}'.format(scratch_dir, num)
+            if not os.path.exists(self.temporary_directory):
+                print('\n[ INFO ] - Creating temporary directory: {}'.format(self.temporary_directory))
+            os.makedirs(self.temporary_directory)
+            os.chdir(self.temporary_directory)
+
+            # Copy group files to the temporary directory
+            print('\n[ INFO ] - Copying files to temporary directory')
+            for f in self.file_group:
+                os.system('cp {} .'.format(f))
+            os.system('ls .')
+
+            # Get the file names
+            fns = [f.split('/')[-1] for f in self.file_group]
+
+            # Load the files
+            if not (self.tree_name is None):
+                self.tree = load(fns, self.tree_name)
             else:
-                self.tree = load(tmpfiles)
+                self.tree = load(fns)
 
-            # Move back to cwd in case running multiple procs
-            os.chdir(self.cwd)
+            # Move back to the main directory
+            os.chdir(self.main_directory)
 
-    def addBranch(self, ldmx_class, branch_name):
+    # Method to add a new branch
+    def add_branch(self, ldmx_class, branch_name):
 
-        # Add a new branch to read from
-
-        if self.tree == None:
-            sys.exit('Set tree')
+        if self.tree is None:
+            print('\n[ ERROR ] - A tree needs to be set before attempting to add a branch!')
+            sys.exit()
 
         if ldmx_class == 'EventHeader': branch = r.ldmx.EventHeader()
         elif ldmx_class == 'EcalVetoResult': branch = r.ldmx.EcalVetoResult()
         elif ldmx_class == 'HcalVetoResult': branch = r.ldmx.HcalVetoResult()
         elif ldmx_class == 'TriggerResult': branch = r.ldmx.TriggerResult()
-        elif ldmx_class == 'SimParticle': branch = r.map(int, 'ldmx::'+ldmx_class)()
-        else: branch = r.std.vector('ldmx::'+ldmx_class)()
+        elif ldmx_class == 'SimParticle': branch = r.map(int, 'ldmx::SimParticle')()
+        else: branch = r.std.vector('ldmx::{}'.format(ldmx_class))()
 
-        self.tree.SetBranchAddress(branch_name,r.AddressOf(branch))
+        self.tree.SetBranchAddress(branch_name, r.AddressOf(branch))
 
         return branch
  
-    def run(self, strEvent=0, maxEvents=-1, pfreq=1000):
-   
-        # Process events
+    # Method to process events
+    def run(self, start_event = 0, max_events = -1, print_frequency = 1000):
 
-        if strEvent != 0: self.strEvent = strEvent
-        if maxEvents != -1: self.maxEvents = maxEvents
-        if self.maxEvents == -1 or self.strEvent + self.maxEvents > self.tree.GetEntries():
-            self.maxEvents = self.tree.GetEntries() - self.strEvent
-        maxEvent = self.strEvent + self.maxEvents
-        if pfreq != 1000: self.pfreq = pfreq
+        print('\n[ INFO ] - Starting event process')
 
-        self.event_count = self.strEvent
-        while self.event_count < maxEvent:
+        # Reset some attributes if needed
+        if start_event != self.start_event: self.start_event = start_event
+        if max_events != self.max_events: self.max_events = max_events
+        if self.max_events == -1 or self.start_event + self.max_events > self.tree.GetEntries():
+            self.max_events = self.tree.GetEntries() - self.start_event
+        self.max_event = self.start_event + self.max_events
+        if print_frequency != self.print_frequency: self.print_frequency = print_frequency
+
+        self.event_count = self.start_event
+        while self.event_count < self.max_event:
             self.tree.GetEntry(self.event_count)
-            if self.event_count%self.pfreq == 0:
-                print('Processing Event: %s'%(self.event_count))
-            self.event_process(self)
+            if self.event_count%self.print_frequency == 0:
+                print('Processing event: {}'.format(self.event_count))
+            self.process_event(self)
             self.event_count += 1
 
-        # Execute any closing function(s) (might impliment *args, **kwargs later)
-        if self.extrafs != None:
-            for extraf in self.extrafs:
-                extraf()
+        # Execute any closing functions
+        if not (self.closing_functions is None):
+            for fnc in self.closing_functions:
+                fnc()
 
-        # Move back to cwd in case running multiple procs
+        # Move back to main directory
         os.chdir(self.cwd)
 
-        # Remove tmp directory if created in move
-        if self.mvd:
-            print( 'Removing tmp directory %s' % self.tmp_dir )
-            os.system('rm -rf %s' % self.tmp_dir)
+        # Remove temporary directory if created
+        if self.use_scratch:
+            print('\n[ INFO ] - Removing temporary directory: {}'.format(self.temporary_directory))
+            os.system('rm -rf {}'.format(self.temporary_directory))
 
 
-##########################################
-# Class to help write to a TTree
-##########################################
+#####################################
+# Class to write to a TTree
+#####################################
 
 class TreeMaker:
 
