@@ -156,12 +156,14 @@ class TreeMaker:
         self.out_file = r.TFile(self.out_name, 'RECREATE')
         self.tree = r.TTree(tree_name, tree_name)
 
-        # Set up new branches if given
-        if len(branch_information) > 0:
-            for branch_name in branch_information:
-                self.add_branch(self.branch_information[branch_name]['dtype'],
-                                self.branch_information[branch_name]['default'],
-                                branch_name)
+        # Add branches to the tree if already given
+        for branch_name in branch_information:
+            data_type = branch_information[branch_name]['dtype']
+            self.branches[branch_name] = np.zeros(1, dtype = data_type)
+            if str(data_type) == "<type 'float'>" or str(data_type) == "<class 'float'>":
+                self.tree.Branch(branch_name, self.branches[branch_name], branch_name + '/D')
+            elif str(data_type) == "<type 'int'>" or str(data_type) == "<class 'int'>":
+                self.tree.Branch(branch_name, self.branches[branch_name], branch_name + '/I')
 
     # Method to add a new branch
     def add_branch(self, data_type, default_value, branch_name):
@@ -172,17 +174,15 @@ class TreeMaker:
         elif str(data_type) == "<type 'int'>" or str(data_type) == "<class 'int'>":
             self.tree.Branch(branch_name, self.branches[branch_name], branch_name + '/I')
 
-    # Method to return a fresh list of values
-    def reset_features(self):
-        features = {}
-        for branch_name in self.branch_information:
-            features[branch_name] = self.branch_information[branch_name]['default']
-        return features
+    # Method to reset the branch values
+    def reset_values(self):
+        for branch_name in self.branches:
+            self.branches[branch_name][0] = self.branch_information[branch_name]['default']
 
-    # Method to fill the tree with a list of new values
-    def fill(self, features):
-        for feature in features:
-            self.branches[feature][0] = features[feature]
+    # Method to fill the branches with new values
+    def fill(self, new_values):
+        for branch_name in new_values:
+            self.branches[branch_name][0] = new_values[branch_name]
         self.tree.Fill()
 
     # Method to write to the tree
