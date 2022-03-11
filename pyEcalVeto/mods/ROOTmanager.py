@@ -167,6 +167,7 @@ class TreeMaker:
 
     # Method to add a new branch
     def add_branch(self, data_type, default_value, branch_name):
+
         self.branch_information[branch_name] = {'dtype': data_type, 'default': default_value}
         self.branches[branch_name] = np.zeros(1, dtype = data_type)
         if str(data_type) == "<type 'float'>" or str(data_type) == "<class 'float'>":
@@ -176,11 +177,13 @@ class TreeMaker:
 
     # Method to reset the branch values
     def reset_values(self):
+
         for branch_name in self.branches:
             self.branches[branch_name][0] = self.branch_information[branch_name]['default']
 
     # Method to fill the branches with new values
     def fill(self, new_values):
+
         for branch_name in new_values:
             self.branches[branch_name][0] = new_values[branch_name]
         self.tree.Fill()
@@ -207,24 +210,22 @@ class TreeMaker:
 # Miscellaneous functions
 ###################################
 
+# Function serving as a wrapper for argparse
 def parse(nolist = False):
 
-    # Arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch', action='store_true', dest='batch', default=False,
-            help='Run in batch mode [Default: False]')
-    parser.add_argument('--sep', action='store_true', dest='separate', default = False,
-            help='separate events into different files [Default: False]')
-    parser.add_argument('-i', nargs='+', action='store', dest='infiles', default=[],
-            help='input file(s)')
-    parser.add_argument('--indirs', nargs='+', action='store', dest='indirs', default=[],
-            help='Director(y/ies) of input files')
-    parser.add_argument('-g','-groupls', nargs='+', action='store', dest='group_labels',
-            default='', help='Human readable sample labels e.g. for legends')
+    parser.add_argument('--batch_mode', action = 'store_true', dest = 'batch_mode', default = False,
+                        help = 'Whether to run in batch mode (Default: False)')
+    parser.add_argument('--separate', action = 'store_true', dest = 'separate', default = False,
+                        help = 'Whether to separate events by fiducial category (Default: False)')
+    parser.add_argument('-i', nargs = '+', action = 'store', dest = 'inputs', default = [],
+                        help = 'Input files')
+    parser.add_argument('--input_dirs', nargs = '+', action = 'store', dest = 'input_dirs', default = [],
+                        help = 'Directories of input files')
+    parser.add_argument('-g', nargs = '+', action = 'store', dest = 'group_labels', default = '',
+                        help = 'Labels for each group of input files')
     parser.add_argument('-o','--out', nargs='+', action='store', dest='out', default=[],
             help='output files or director(y/ies) of output files')
-            # if inputting directories, it's best to make a system
-            # for naming files in main() of main script 
     parser.add_argument('--notlist', action='store_true', dest='nolist',
             help="return things without lists (to make things neater for 1 sample runs")
     parser.add_argument('-s','--start', type=int, action='store', dest='startEvent',
@@ -267,13 +268,16 @@ def parse(nolist = False):
 
 # Function to load a tree from a file group
 def load(file_group, tree_name):
+
     tree = r.TChain(tree_name)
     for f in group:
         tree.Add(f)
+
     return tree
 
 # Function to remove the current scratch directory
 def remove_scratch():
+
     if os.path.exists('./scratch'):
         print('\n[ INFO ] - Removing current scratch directory')
         os.system('rm -rf ./scratch')
