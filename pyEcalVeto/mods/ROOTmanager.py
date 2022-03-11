@@ -116,6 +116,7 @@ class TreeProcess:
         self.max_event = self.start_event + self.max_events
         self.event_count = self.start_event
 
+        # Loop to process events
         while self.event_count < self.max_event:
             self.tree.GetEntry(self.event_count)
             if self.event_count%self.print_frequency == 0:
@@ -143,69 +144,63 @@ class TreeProcess:
 
 class TreeMaker:
 
-    def __init__(self, outfile, tree_name, branches_info = {}, outdir=''):
+    def __init__(self, out_name, tree_name, branch_information = {}, out_directory = ''):
 
-        self.outfile = outfile
+        self.out_name = out_name
         self.tree_name = tree_name
-        self.branches_info = branches_info
+        self.branch_information = branch_information
         self.branches = {}
-        self.outdir = outdir
+        self.out_directory = out_directory
 
         # Create output file and tree
-        self.tfout = r.TFile(self.outfile,"RECREATE")
+        self.out_file = r.TFile(self.out_name, 'RECREATE')
         self.tree = r.TTree(tree_name, tree_name)
 
-        # Set up new tree branches if given branches_info
-        if len(branches_info) != 0:
-            for branch_name in branches_info:
-                self.addBranch(self.branches_info[branch_name]['rtype'],\
-                               self.branches_info[branch_name]['default'],\
-                               branch_name)
+        # Set up new branches if given
+        if len(branch_information) > 0:
+            for branch_name in branch_information:
+                self.add_branch(self.branch_information[branch_name]['dtype'],
+                                self.branch_information[branch_name]['default'],
+                                branch_name)
 
-    def addBranch(self, rtype, default_value, branch_name):
+    # Method to add a new branch
+    def add_branch(self, data_type, default_value, branch_name):
+        self.branch_information[branch_name] = {'dtype': data_type, 'default': default_value}
+        self.branches[branch_name] = np.zeros(1, dtype = data_type)
+        if str(data_type) == "<type 'float'>" or str(data_type) == "<class 'float'>":
+            self.tree.Branch(branch_name, self.branches[branch_name], branch_name + '/D')
+        elif str(data_type) == "<type 'int'>" or str(data_type) == "<class 'int'>":
+            self.tree.Branch(branch_name, self.branches[branch_name], branch_name + '/I')
 
-        # Add a new branch to write to
+    # Method to return a fresh list of values
+    def reset_features(self):
+        features = {}
+        for branch_name in self.branch_information:
+            features[branch_name] = self.branch_information[branch_name]['default']
+        return features
 
-        self.branches_info[branch_name] = {'rtype': rtype, 'default': default_value}
-        self.branches[branch_name] = np.zeros(1, dtype=rtype)
-        if str(rtype) == "<type 'float'>" or str(rtype) == "<class 'float'>":
-            self.tree.Branch(branch_name, self.branches[branch_name], branch_name + "/D")
-        elif str(rtype) == "<type 'int'>" or str(rtype) == "<class 'int'>":
-            self.tree.Branch(branch_name, self.branches[branch_name], branch_name + "/I")
-        # ^ probably use cases based on rtype to change the /D if needed?
-
-    def resetFeats(self):
-
-        # Reset variables to defaults for new event
-        # Return because feats['feat'] looks nicer than self.tfMaker.feats['feat']
-
-        feats = {}
-        for branch_name in self.branches_info:
-            feats[branch_name] = self.branches_info[branch_name]['default']
-
-        return feats
-
-    def fillEvent(self, feats):
-
-        # Fill the tree with new feature values
-
-        for feat in feats:
-            self.branches[feat][0] = feats[feat]
+    # Method to fill the tree with a list of new values
+    def fill(self, features):
+        for feature in features:
+            self.branches[feature][0] = features[feature]
         self.tree.Fill()
 
-    def wq(self):
+    # Method to write to the tree
+    def write(self):
 
         # Save the tree and close the file
-        self.tfout.Write(self.tree_name)
-        self.tfout.Close()
+        self.out_file.Write(self.tree_name)
+        self.out_file.Close()
 
-        if self.outdir != '':
-            if not os.path.exists(self.outdir):
-                print( 'Creating %s' % (self.outdir) )
-                os.makedirs(self.outdir)
+        if self.out_directory != '':
 
-            print( 'cp %s %s' % (self.outfile,self.outdir) )
-            os.system('cp %s %s' % (self.outfile,self.outdir))
+            # Create the output directory if it doesn't already exist
+            if not os.path.exists(self.out_directory):
+                print('\n[ INFO ] - Creating output directory: {}'.format(self.out_directory))
+                os.makedirs(self.out_directory)
+
+            print('\n[ INFO ] - Copying output file to output directory')
+            os.system('cp {} {}'.format(self.out_name, self.out_directory))
 
 
 ###################################
