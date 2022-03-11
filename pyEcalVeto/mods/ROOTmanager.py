@@ -204,13 +204,10 @@ class TreeMaker:
 
 
 ###################################
-# Functions
+# Miscellaneous functions
 ###################################
 
 def parse(nolist = False):
-
-    import glob
-    import argparse
 
     # Arguments
     parser = argparse.ArgumentParser()
@@ -268,20 +265,15 @@ def parse(nolist = False):
 
     return pdict
 
-# Load a tree from a group of input files
-def load(group,treeName='LDMX_Events'):
-
-    # Load a group of files into a readable tree
-
-    tree = r.TChain(treeName)
+# Function to load a tree from a file group
+def load(file_group, tree_name):
+    tree = r.TChain(tree_name)
     for f in group:
         tree.Add(f)
-
     return tree
 
-# Remove scratch dir
-def rmScratch():
+# Function to remove the current scratch directory
+def remove_scratch():
     if os.path.exists('./scratch'):
-        print( '\nRemoving scratch directory' )
+        print('\n[ INFO ] - Removing current scratch directory')
         os.system('rm -rf ./scratch')
-
