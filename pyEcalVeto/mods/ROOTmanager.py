@@ -13,7 +13,7 @@ import sys
 class TreeProcess:
 
     def __init__(self, process_event, file_group = [], tree = None, tree_name = 'LDMX_Events', name_tag = 'tree_process',
-                 start_event = 0, max_events = -1, print_frequency = 1000, batch_mode = False, closing_functions = None):
+                 start_event = 0, max_events = -1, print_frequency = 1000, batch_mode = False, closing_functions = []):
 
         print('\n[ INFO ] - Preparing tree process with name tag: {}'.format(name_tag))
 
@@ -125,7 +125,7 @@ class TreeProcess:
             self.event_count += 1
 
         # Execute any closing functions
-        if not (self.closing_functions is None):
+        if len(self.closing_functions) > 0:
             for fnc in self.closing_functions:
                 fnc()
 
