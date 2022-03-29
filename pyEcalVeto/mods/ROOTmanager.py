@@ -49,7 +49,7 @@ def parse():
         if args.use_lists == False:
             inputs = inputs[0]
     elif args.input_files == [] and args.input_directories != []:
-        inputs = [glob.glob('{}/*.root'.format(indir)) for indir in args.input_directories]
+        inputs = [glob.glob('{}/*.root'.format(input_dir)) for input_dir in args.input_directories]
         if args.use_lists == False:
             inputs = inputs[0]
 
