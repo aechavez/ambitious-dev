@@ -1,9 +1,88 @@
 import argparse
-import glob
 import numpy as np
 import os
 import ROOT as r
 import sys
+from glob import glob
+
+
+###################################
+# Miscellaneous functions
+###################################
+
+# Function serving as a wrapper for argparse
+def parse():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch_mode', action = 'store_true', dest = 'batch_mode', default = False,
+                        help = 'Whether to run in batch mode (Default: False)')
+    parser.add_argument('--separate', action = 'store_true', dest = 'separate_categories', default = False,
+                        help = 'Whether to separate events by fiducial category (Default: False)')
+    parser.add_argument('-i', nargs = '+', action = 'store', dest = 'input_files', default = [],
+                        help = 'Space-separated list of input files')
+    parser.add_argument('--input_dirs', nargs = '+', action = 'store', dest = 'input_directories', default = [],
+                        help = 'Space-separated list of input file directories')
+    parser.add_argument('-g', nargs = '+', action = 'store', dest = 'group_labels', default = '',
+                        help = 'Space-separated list of labels for each group of input files')
+    parser.add_argument('-o', '--out_dirs', nargs = '+', action = 'store', dest = 'outputs', default = [],
+                        help = 'Space-separated list of output files or output file directories')
+    parser.add_argument('--use_lists', action = 'store_true', dest = 'use_lists', default = False,
+                        help = 'Whether to use lists under the hood. Makes code neater for one-sample runs (Default: False)')
+    parser.add_argument('-s', type = int, action = 'store', dest = 'start_event', default = 0,
+                        help = 'Index of first event to process')
+    parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
+                        help = 'Maximum number of events to run over for each group of input files')
+    args = parser.parse_args()
+
+    if not ((args.input_files != [] and args.input_directories == [])\
+            or (args.input_files == [] and args.input_directories != [])):
+        print('\n[ ERROR ] - Must provide either a list of input files or input file directories!')
+        sys.exit(1)
+
+    if args.outputs == []:
+        print('\n[ ERROR ] - Must provide either a list of output files or output file directories!')
+        sys.exit(1)
+
+    # Parse inputs
+    if args.input_files != []:
+        inputs = [[f] for f in args.input_files]
+        if args.use_lists == False:
+            inputs = inputs[0]
+    elif args.input_directories != []:
+        inputs = [glob('{}/*.root'.format(indir)) for indir in args.input_directories]
+        if args.use_lists == False:
+            inputs = inputs[0]
+
+    # Parse outputs
+    outputs = args.outputs
+    if args.use_lists == False:
+        outputs = outputs[0]
+    
+    parsing_dict = {'batch_mode': args.batch_mode,
+                    'separate_categories': args.separate_categories,
+                    'inputs': inputs,
+                    'group_labels': args.group_labels,
+                    'outputs': outputs,
+                    'start_event': args.start_event,
+                    'max_events': args.max_events}
+
+    return parsing_dict
+
+# Function to load a tree from a file group
+def load(file_group, tree_name):
+
+    tree = r.TChain(tree_name)
+    for f in group:
+        tree.Add(f)
+
+    return tree
+
+# Function to remove the current scratch directory
+def remove_scratch():
+
+    if os.path.exists('./scratch'):
+        print('\n[ INFO ] - Removing current scratch directory')
+        os.system('rm -rf ./scratch')
 
 
 ###################################
@@ -204,80 +283,3 @@ class TreeMaker:
 
             print('\n[ INFO ] - Copying output file to output directory')
             os.system('cp {} {}'.format(self.out_name, self.out_directory))
-
-
-###################################
-# Miscellaneous functions
-###################################
-
-# Function serving as a wrapper for argparse
-def parse(nolist = False):
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_mode', action = 'store_true', dest = 'batch_mode', default = False,
-                        help = 'Whether to run in batch mode (Default: False)')
-    parser.add_argument('--separate', action = 'store_true', dest = 'separate', default = False,
-                        help = 'Whether to separate events by fiducial category (Default: False)')
-    parser.add_argument('-i', nargs = '+', action = 'store', dest = 'inputs', default = [],
-                        help = 'Input files')
-    parser.add_argument('--input_dirs', nargs = '+', action = 'store', dest = 'input_dirs', default = [],
-                        help = 'Directories of input files')
-    parser.add_argument('-g', nargs = '+', action = 'store', dest = 'group_labels', default = '',
-                        help = 'Labels for each group of input files')
-    parser.add_argument('-o','--out', nargs='+', action='store', dest='out', default=[],
-            help='output files or director(y/ies) of output files')
-    parser.add_argument('--notlist', action='store_true', dest='nolist',
-            help="return things without lists (to make things neater for 1 sample runs")
-    parser.add_argument('-s','--start', type=int, action='store', dest='startEvent',
-            default=0, help='event to start at')
-    parser.add_argument('-m','--max', type=int, action='store', dest='maxEvents',
-            default=-1, help='max events to run over for EACH group')
-    args = parser.parse_args()
-
-    # Input
-    if args.infiles != []:
-        inlist = [[f] for f in args.infiles] # Makes general loading easier
-        if nolist or args.nolist == True:
-            inlist = inlist[0]
-    elif args.indirs != []:
-        inlist = [glob.glob(indir + '/*.root') for indir in args.indirs]
-        if nolist or args.nolist == True:
-            inlist = inlist[0]
-    else:
-        sys.exit('provide input')
-
-    # Output
-    if args.out != []:
-        outlist = args.out
-        if nolist or args.nolist == True:
-            outlist = outlist[0]
-    else:
-        sys.exit('provide output')
-    
-    pdict = {
-            'batch': args.batch,
-            'separate': args.separate,
-            'inlist': inlist,
-            'groupls': args.group_labels,
-            'outlist': outlist,
-            'startEvent': args.startEvent,
-            'maxEvents': args.maxEvents
-            }
-
-    return pdict
-
-# Function to load a tree from a file group
-def load(file_group, tree_name):
-
-    tree = r.TChain(tree_name)
-    for f in group:
-        tree.Add(f)
-
-    return tree
-
-# Function to remove the current scratch directory
-def remove_scratch():
-
-    if os.path.exists('./scratch'):
-        print('\n[ INFO ] - Removing current scratch directory')
-        os.system('rm -rf ./scratch')
