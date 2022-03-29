@@ -184,7 +184,7 @@ class TreeMaker:
     # Method to fill the branches with new values
     def fill(self, new_values):
 
-        for branch_name in new_values:
+        for branch_name in self.branches:
             self.branches[branch_name][0] = new_values[branch_name]
         self.tree.Fill()
 
