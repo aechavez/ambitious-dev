@@ -1,9 +1,9 @@
 import argparse
+import glob
 import numpy as np
 import os
 import ROOT as r
 import sys
-from glob import glob
 
 
 ###################################
@@ -27,7 +27,7 @@ def parse():
     parser.add_argument('-o', '--out_dirs', nargs = '+', action = 'store', dest = 'outputs', default = [],
                         help = 'Space-separated list of output files or output file directories')
     parser.add_argument('--use_lists', action = 'store_true', dest = 'use_lists', default = False,
-                        help = 'Whether to use lists under the hood. Makes code neater for one-sample runs (Default: False)')
+                        help = 'Whether to use lists under the hood. Setting to false makes code neater for one-sample runs (Default: False)')
     parser.add_argument('-s', type = int, action = 'store', dest = 'start_event', default = 0,
                         help = 'Index of first event to process')
     parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
@@ -44,12 +44,12 @@ def parse():
         sys.exit(1)
 
     # Parse inputs
-    if args.input_files != []:
+    if args.input_files != [] and args.input_directories == []:
         inputs = [[f] for f in args.input_files]
         if args.use_lists == False:
             inputs = inputs[0]
-    elif args.input_directories != []:
-        inputs = [glob('{}/*.root'.format(indir)) for indir in args.input_directories]
+    elif args.input_files == [] and args.input_directories != []:
+        inputs = [glob.glob('{}/*.root'.format(indir)) for indir in args.input_directories]
         if args.use_lists == False:
             inputs = inputs[0]
 
