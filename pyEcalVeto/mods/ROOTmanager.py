@@ -69,11 +69,11 @@ def parse():
     return parsing_dict
 
 # Function to load a tree from a file group
-def load(file_group, tree_name):
+def load(file_names, tree_name):
 
     tree = r.TChain(tree_name)
-    for f in group:
-        tree.Add(f)
+    for fn in file_names:
+        tree.Add(fn)
 
     return tree
 
