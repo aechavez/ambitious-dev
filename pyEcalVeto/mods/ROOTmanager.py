@@ -68,7 +68,7 @@ def parse():
 
     return parsing_dict
 
-# Function to load a tree from a file group
+# Function to load a tree from a list of file names
 def load(file_names, tree_name):
 
     tree = r.TChain(tree_name)
@@ -160,7 +160,7 @@ class TreeProcess:
             # Move back to the main directory
             os.chdir(self.main_directory)
 
-    # Method to add a new branch
+    # Method to add a new branch and return it for easy access
     def add_branch(self, ldmx_class, branch_name):
 
         if ldmx_class == 'EventHeader': branch = r.ldmx.EventHeader()
