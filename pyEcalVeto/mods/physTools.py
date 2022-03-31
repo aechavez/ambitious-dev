@@ -2,29 +2,49 @@ import math
 import numpy as np
 
 
+#############################
+# General constants
+#############################
+
 # Constant defining the clearance between volumes
 clearance = 0.001
-# Thickness of scoring planes
+
+# Thickness of the scoring planes
 sp_thickness = 0.001
 
-# Target GDML
+
+############################
+# Target constants
+############################
+
 # Position
-target_z = 0.0
-# Tungsten X0 = .3504 cm
-# Target thickness = .1X0
+target_z = 0.
+
+# Tungsten X0 = 0.3504cm
+# Target thickness = 0.1X0
 target_thickness = 0.3504
+
 # Target dimensions
 target_dim_x = 40.
 target_dim_y = 100.
+
+
+#################################
+# Target scoring planes
+#################################
 
 # Surround the target with scoring planes
 sp_target_down_z = target_z + target_thickness/2 + sp_thickness/2 + clearance
 sp_target_up_z = target_z - target_thickness/2 - sp_thickness/2 - clearance
 
-# Trigger scintillator GDML
+
+##########################################
+# Trigger scintillator constants
+##########################################
+
 # Trigger scintillator positions
 trigger_pad_thickness = 4.5
-trigger_pad_bar_thickness = 2
+trigger_pad_bar_thickness = 2.
 trigger_pad_bar_gap = 0.3
 trigger_pad_dim_x = target_dim_x
 trigger_pad_dim_y = target_dim_y
@@ -36,8 +56,14 @@ trigger_pad_offset = (target_dim_y - (number_of_bars*trigger_bar_dy + (number_of
 
 # Trigger pad distance from the target is -2.4262mm
 trigger_pad_up_z = target_z - (target_thickness/2) - (trigger_pad_thickness/2) - clearance
+
 # Trigger pad distance from the target is 2.4262mm
 trigger_pad_down_z = target_z + (target_thickness/2) + (trigger_pad_thickness/2) + clearance
+
+
+###############################################
+# Trigger scintillator scoring planes
+###############################################
 
 # Place scoring planes downstream of each trigger scintillator array
 sp_trigger_pad_down_l1_z = trigger_pad_down_z - trigger_pad_bar_gap/2 + sp_thickness/2 + clearance
@@ -45,7 +71,12 @@ sp_trigger_pad_down_l2_z = trigger_pad_down_z + trigger_pad_bar_gap/2 + trigger_
 sp_trigger_pad_up_l1_z = trigger_pad_up_z - trigger_pad_bar_gap/2 + sp_thickness/2 + clearance
 sp_trigger_pad_up_l2_z = trigger_pad_up_z + trigger_pad_bar_gap/2 + trigger_pad_bar_thickness + sp_thickness/2 + clearance
 
-# ECal GDML
+
+##########################
+# ECal constants
+##########################
+
+### LEFT OFF HERE ###
 # ECal layer thicknesses
 Wthick_A_dz = 0.75
 W_A_dz = 0.75
