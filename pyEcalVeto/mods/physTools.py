@@ -76,7 +76,6 @@ sp_trigger_pad_up_l2_z = trigger_pad_up_z + trigger_pad_bar_gap/2 + trigger_pad_
 # ECal constants
 ##########################
 
-### LEFT OFF HERE ###
 # ECal layer thicknesses
 Wthick_A_dz = 0.75
 W_A_dz = 0.75
@@ -84,14 +83,14 @@ Wthick_B_dz = 2.25
 W_B_dz = 1.5
 Wthick_C_dz = 3.5
 W_C_dz = 1.75
-Wthick_D_dz = 7.0
+Wthick_D_dz = 7.
 W_D_dz = 3.5
 CFMix_dz = 0.05
 CFMixThick_dz = 0.2
 PCB_dz = 1.5
 Si_dz = 0.5
 C_dz = 0.5
-Al_dz = 2.0
+Al_dz = 2.
 
 # Air separating sheets of Al or W with PCB motherboard
 # Limited by construction abilities 
@@ -100,11 +99,11 @@ FrontTolerance = 0.5
 # Gap between layers
 BackTolerance = 0.5
 
-# Air separating PCBs from PCB MotherBoards
+# Air separting PCBs from PCB MotherBoards
 PCB_Motherboard_Gap = 2.3
 
 # Air separating Carbon sheets in the middle of a layer
-CoolingAirGap = 4.0
+CoolingAirGap = 4.
 
 # Preshower thickness is 20.1mm
 preshower_Thickness = Al_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
@@ -118,6 +117,8 @@ layer_A_Thickness = Wthick_A_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
                     + CoolingAirGap + C_dz + W_A_dz + CFMixThick_dz + Si_dz\
                     + CFMix_dz + PCB_dz + PCB_Motherboard_Gap + PCB_dz\
                     + BackTolerance
+
+### LEFT OFF HERE ###
 
 # Layer B thickness is 22.35mm
 # GDML comment indicates that this is 22.35mm, but the actual value is 23.35mm!
