@@ -48,8 +48,8 @@ trigger_pad_bar_thickness = 2.
 trigger_pad_bar_gap = 0.3
 trigger_pad_dim_x = target_dim_x
 trigger_pad_dim_y = target_dim_y
-trigger_bar_dx = 40
-trigger_bar_dy = 3
+trigger_bar_dx = 40.
+trigger_bar_dy = 3.
 number_of_bars = 25
 
 trigger_pad_offset = (target_dim_y - (number_of_bars*trigger_bar_dy + (number_of_bars - 1)*trigger_pad_bar_gap))/2
@@ -229,8 +229,8 @@ ecal_CELL_SHIFT = 0
 # HCal constants
 ##########################
 
-# Width and height of the envelope for the side and back HCal
-# Must be the maximum of back hcal dx and side hcal dx
+# Width and height of the envelope for the side and back HCal 
+# Must be the maximum of back HCal dx and side HCal dx 
 hcal_envelope_dx = 3100.
 hcal_envelope_dy = 3100.
 
@@ -238,18 +238,18 @@ hcal_envelope_dy = 3100.
 air_thick = 2.
 scint_thick = 20.
 
-# Back HCal Layer component
+# Back HCal layer component
 # Layer 1 has no absorber, layers 2 and 3 have absorber of different thickness
 hcal_back_dx = 3100.
 hcal_back_dy = 3100.
 back_numLayers1 = 0
 back_numLayers2 = 100
 back_numLayers3 = 0
-back_abso2_thick = 25
-back_abso3_thick = 50
+back_abso2_thick = 25.
+back_abso3_thick = 50.
 back_layer1_thick = scint_thick + air_thick
-back_layer2_thick = back_abso2_thick + scint_thick + 2.0*air_thick
-back_layer3_thick = back_abso3_thick + scint_thick + 2.0*air_thick
+back_layer2_thick = back_abso2_thick + scint_thick + 2*air_thick
+back_layer3_thick = back_abso3_thick + scint_thick + 2*air_thick
 hcal_back_dz1 = back_numLayers1*back_layer1_thick
 hcal_back_dz2 = back_numLayers2*back_layer2_thick
 hcal_back_dz3 = back_numLayers3*back_layer3_thick
@@ -260,13 +260,16 @@ sideTB_layers = 28
 sideLR_layers = 26
 side_abso_thick = 20.
 
-# side_dz has to be greater than side_Ecal_dz
-hcal_side_dz = 600
+# Side dz has to be greater than side ECal dz
+hcal_side_dz = 600.
 
 # Total calorimeter thickness
 hcal_dz = hcal_back_dz + hcal_side_dz
 
-back_start_z = 860.5 # ecal_front_z + hcal_side_dz + 20
+
+###############################
+# HCal scoring planes
+###############################
 
 # Surround the HCal with scoring planes
 sp_hcal_front_z = ecal_front_z - sp_thickness/2 + clearance
@@ -277,30 +280,22 @@ sp_hcal_left_x = -hcal_back_dx/2 - sp_thickness/2
 sp_hcal_right_x = hcal_back_dx/2 + sp_thickness/2
 sp_hcal_mid_z = ecal_front_z + hcal_dz/2
 
-# HCal DetDescr
-# HcalSection BACK = 0, TOP = 1, BOTTOM = 2, LEFT = 4, RIGHT = 3
-hcal_SECTION_MASK = 0x7  # Space for up to 7 sections
+
+#####################################
+# HCal detector description
+#####################################
+
+# Space for up to 7 sections
+hcal_SECTION_MASK = 0x7
 hcal_SECTION_SHIFT = 18
-hcal_LAYER_MASK = 0xFF  # Space for up to 255 layers
+
+# Space for up to 255 layers
+hcal_LAYER_MASK = 0xFF
 hcal_LAYER_SHIFT = 10
-hcal_STRIP_MASK = 0xFF  # Space for 255 strips/layer
+
+# Space for up to 255 strips/layer
+hcal_STRIP_MASK = 0xFF
 hcal_STRIP_SHIFT = 0
-
-ecal_zs_round = [round(z) for z in ecal_layerZs]
-ecal_rz2layer = {}
-for rz, i in zip(ecal_zs_round,range(1,35)):
-    ecal_rz2layer[rz] = i
-
-# For v12 reconstruction
-mipSiEnergy = 0.130 # MeV
-secondOrderEnergyCorrection = 4000./4010.
-layerWeights = [1.675,  2.724,  4.398,  6.039,  7.696,
-                9.077,  9.630,  9.630,  9.630,  9.630,
-                9.630,  9.630,  9.630,  9.630,  9.630,
-                9.630,  9.630,  9.630,  9.630,  9.630,
-                9.630,  9.630,  9.630,  13.497, 17.364,
-                17.364, 17.364, 17.364, 17.364, 17.364,
-                17.364, 17.364, 17.364, 8.990]
 
 # Arrays holding 68% containment radius/layer for different bins in momentum/angle
 radius68_thetalt10_plt500 = [4.045666158618167,  4.086393662224346,  4.359141107602775,  4.666549994726691,  5.8569181911416015,
