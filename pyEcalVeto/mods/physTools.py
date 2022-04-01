@@ -351,37 +351,13 @@ class HitData:
 # Miscellaneous functions
 ###################################
 
-# Reconstructed energy from sim energy
-def recE(siEnergy, layer):
-    return ((siEnergy/mipSiEnergy)*layerWeights[layer-1]+siEnergy)*secondOrderEnergyCorrection
+# Function to get the layerZ of a hit
+def get_layerZ(hit):
+    return ecal_layerZs[get_ecal_layer(hit)]
 
-# 2D Rotation
-def rotate(point,ang): # move to math eventually
-    ang = np.radians(ang)
-    rotM = np.array([[np.cos(ang),-np.sin(ang)],
-                    [np.sin(ang), np.cos(ang)]])
-    return list(np.dot(rotM,point))
+# Function to project a point along a vector to a plane parallel to the XY-plane
+def project_point(x, v, z):
 
-# Get layer number from hitZ (Replaced by ecal_layer)
-def layerofHitZ(hitZ, index = 0):
-    num = ecal_rz2layer[ round(hitZ) ]
-    if index == 1: return num
-    elif index == 0: return num - 1
-    else: print('index should be 0 or 1')
-
-# Get Z in ecal_layerZs from hitZ (Replaced by layerZofHit)
-def layerZofHitZ(hitZ):
-    return ecal_layerZs[ layerofHitZ(hitZ) ]
-
-# Get layerZ from hit
-def layerZofHit(hit):
-    return ecal_layerZs[ecal_layer(hit)]
-
-# Project poimt to z_final
-def projection(pos_init, mom_init, z_final): # infty >.<
-    x_final = pos_init[0] + mom_init[0]/mom_init[2]*(z_final - pos_init[2])
-    y_final = pos_init[1] + mom_init[1]/mom_init[2]*(z_final - pos_init[2])
-    return (x_final, y_final)
 
 # List of projected (x,y)s at each ECal layer
 def layerIntercepts(pos,mom,layerZs=ecal_layerZs):
