@@ -99,7 +99,7 @@ FrontTolerance = 0.5
 # Gap between layers
 BackTolerance = 0.5
 
-# Air separting PCBs from PCB MotherBoards
+# Air separating PCBs from PCB motherboards
 PCB_Motherboard_Gap = 2.3
 
 # Air separating Carbon sheets in the middle of a layer
@@ -108,7 +108,7 @@ CoolingAirGap = 4.
 # Preshower thickness is 20.1mm
 preshower_Thickness = Al_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
                       + PCB_dz + CFMix_dz + Si_dz + CFMixThick_dz + CoolingAirGap\
-                      + 2.*C_dz + CFMixThick_dz + Si_dz + CFMix_dz + PCB_dz\
+                      + 2*C_dz + CFMixThick_dz + Si_dz + CFMix_dz + PCB_dz\
                       + PCB_Motherboard_Gap + PCB_dz + BackTolerance
 
 # Layer A thickness is 20.35mm
@@ -118,10 +118,7 @@ layer_A_Thickness = Wthick_A_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
                     + CFMix_dz + PCB_dz + PCB_Motherboard_Gap + PCB_dz\
                     + BackTolerance
 
-### LEFT OFF HERE ###
-
-# Layer B thickness is 22.35mm
-# GDML comment indicates that this is 22.35mm, but the actual value is 23.35mm!
+# GDML comment indicates Layer B thickness is 22.35mm, but the actual value is 23.35mm!
 layer_B_Thickness = Wthick_B_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
                     + PCB_dz + CFMix_dz + Si_dz + CFMixThick_dz + W_B_dz + C_dz\
                     + CoolingAirGap + C_dz + W_B_dz + CFMixThick_dz + Si_dz\
@@ -138,7 +135,7 @@ layer_C_Thickness = Wthick_C_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
 # Layer D thickness is 32.1mm
 layer_D_Thickness = Wthick_D_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
                     + PCB_dz + CFMix_dz + Si_dz + CFMixThick_dz + W_D_dz + C_dz\
-                    + CoolingAirGap + C_dz + W_D_dz + CFMixThick_dz + Si_dz\
+                    + CoolingAirGap + C_dz + W_D_dz + CFMixThick_dz + Si_dz
                     + CFMix_dz + PCB_dz + PCB_Motherboard_Gap + PCB_dz\
                     + BackTolerance
 
@@ -148,36 +145,42 @@ ecal_B_layers = 1
 ecal_C_layers = 9
 ecal_D_layers = 5
 
-# ECal thickness is 449.2mm
-# GDML comment indicates that this is 449.2mm, but the actual value is 450.2mm!
+# GDML comment indicates ECal thickness is 449.2mm, but the actual value is 450.2mm!
 ECal_dz = preshower_Thickness\
           + layer_A_Thickness*ecal_A_layers\
           + layer_B_Thickness*ecal_B_layers\
           + layer_C_Thickness*ecal_C_layers\
           + layer_D_Thickness*ecal_D_layers
 
-sqrt3 = np.sqrt(3)
+# Flat-to-flat gap between modules
+module_gap = 1.5
 
-module_gap = 1.5  # Flat-to-flat gap between modules
-module_radius = 85.  # Center-to-flat radius of one module
+# Center-to-flat radius of one module
+module_radius = 85.
+
+module_side = (2/np.sqrt(3))*module_radius
 
 # ECal width and height
-ECal_dx = module_radius*10./sqrt3 + sqrt3*module_gap
-ECal_dy = module_radius*6. + module_gap*2.
+ECal_dx = (10/np.sqrt(3))*module_radius + np.sqrt(3)*module_gap
+ECal_dy = 6*module_radius + 2*module_gap
 
-# Distance from target to the ECal parent volume
-# The calorimeter is an additional .5mm downstream at 220.5mm
-# GDML comment indicates that this is 220.5mm, but the actual value is clearly 240.5mm!
+# GDML comment indicates distance from target to ECal is 220.5mm,
+# but the actual value is clearly 240.5mm!
 ecal_front_z = 240.
 
 side_Ecal_dx = 800.
 side_Ecal_dy = 600.
 
-# Dimensions of ECal parent volume
-# The size is set to be 1mm larger than the thickness of the ECal calculated above
+# Dimensions of ECal parent volume. The size is set to be 1mm larger than
+# the thickness of the ECal calculated above
 ecal_envelope_x = side_Ecal_dx
 ecal_envelope_y = side_Ecal_dy
-ecal_envelope_z = ECal_dz + 1
+ecal_envelope_z = ECal_dz + 1.
+
+
+###############################
+# ECal scoring planes
+###############################
 
 # Surround the ECal with scoring planes
 sp_ecal_front_z = ecal_front_z + (ecal_envelope_z - ECal_dz)/2 - sp_thickness/2 + clearance
@@ -188,18 +191,10 @@ sp_ecal_left_x = -ECal_dx/2 - sp_thickness/2
 sp_ecal_right_x = ECal_dx/2 + sp_thickness/2
 sp_ecal_mid_z = ecal_front_z + ECal_dz/2 + (ecal_envelope_z - ECal_dz)/2
 
-sin60 = np.sin(np.radians(60))
-module_side = module_radius/sin60
-cell_radius = 5
-cellWidth = 8.7
 
-# ECal DetDescr
-ecal_LAYER_MASK = 0x3F  # Space for up to 64 layers
-ecal_LAYER_SHIFT = 17
-ecal_MODULE_MASK = 0x1F  # Space for up to 32 modules/layer
-ecal_MODULE_SHIFT = 12
-ecal_CELL_MASK = 0xFFF  # Space for 4096 cells/module
-ecal_CELL_SHIFT = 0
+#####################################
+# ECal detector description
+#####################################
 
 ecal_layerZs = ecal_front_z  + (ecal_envelope_z - ECal_dz)/2 + np.array([7.850,   13.300,  26.400,  33.500,  47.950,
                                                                          56.550,  72.250,  81.350,  97.050,  106.150,
@@ -209,7 +204,31 @@ ecal_layerZs = ecal_front_z  + (ecal_envelope_z - ECal_dz)/2 + np.array([7.850, 
                                                                          311.550, 330.750, 343.350, 362.550, 375.150,
                                                                          394.350, 406.950, 426.150, 438.750])
 
-# HCal GDML
+nCellRHeight = 35.3
+
+# Center-to-corner radius of one cell
+cell_radius = (2/nCellRHeight)*module_radius
+
+# Center-to-flat diameter of one cell
+cellWidth = np.sqrt(3)*cell_radius
+
+# Space for up to 64 layers
+ecal_LAYER_MASK = 0x3F
+ecal_LAYER_SHIFT = 17
+
+# Space for up to 32 modules/layer
+ecal_MODULE_MASK = 0x1F
+ecal_MODULE_SHIFT = 12
+
+# Space for up to 4096 cells/module
+ecal_CELL_MASK = 0xFFF
+ecal_CELL_SHIFT = 0
+
+
+##########################
+# HCal constants
+##########################
+
 # Width and height of the envelope for the side and back HCal
 # Must be the maximum of back hcal dx and side hcal dx
 hcal_envelope_dx = 3100.
