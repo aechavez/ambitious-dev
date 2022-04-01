@@ -210,7 +210,7 @@ nCellRHeight = 35.3
 cell_radius = (2/nCellRHeight)*module_radius
 
 # Center-to-flat diameter of one cell
-cellWidth = np.sqrt(3)*cell_radius
+cell_width = np.sqrt(3)*cell_radius
 
 # Space for up to 64 layers
 ecal_LAYER_MASK = 0x3F
@@ -297,7 +297,12 @@ hcal_LAYER_SHIFT = 10
 hcal_STRIP_MASK = 0xFF
 hcal_STRIP_SHIFT = 0
 
-# Arrays holding 68% containment radius/layer for different bins in momentum/angle
+
+###################################
+# Miscellaneous constants
+###################################
+
+# 68% containment radii/layer for different bins in momentum/angle
 radius68_thetalt10_plt500 = [4.045666158618167,  4.086393662224346,  4.359141107602775,  4.666549994726691,  5.8569181911416015,
                              6.559716356124256,  8.686967529043072,  10.063482736354674, 13.053528344041274, 14.883496407943747,
                              18.246694748611368, 19.939799900443724, 22.984795944506224, 25.14745829663406,  28.329169392203216,
@@ -327,20 +332,24 @@ radius68_thetagt20 = [4.0754238481177705, 4.193693485630508,  5.14209420056253, 
                       120.89712563907408, 133.27021026999518, 142.99196243434795, 155.36504706526904, 165.08679922962185,
                       177.45988386054293, 187.18163602489574, 199.55472065581682, 209.2764728201696]
 
-# For longitudinal segmentation
-segLayers = [0, 6, 17, 34]
-nRegions = 5
-nSegments = len(segLayers) - 1
+# Endpoints for each longitudinal segment
+segment_ends = [0, 6, 17, 34]
+nsegments = len(segment_ends) - 1
+
+# Number of containment regions
+nregions = 5
 
 # Simple class for storing hit data
 class HitData:
-    def __init__(self,pos=None,layer=None):
-        self.pos = pos
+
+    def __init__(self, position = None, layer = None):
+        self.position = position
         self.layer = layer
 
-###########################
+
+###################################
 # Miscellaneous functions
-###########################
+###################################
 
 # Reconstructed energy from sim energy
 def recE(siEnergy, layer):
