@@ -356,28 +356,40 @@ def get_layerZ(hit):
     return ecal_layerZs[get_ecal_layer(hit)]
 
 # Function to project a point along a vector to a plane parallel to the XY-plane
-def project_point(x, v, z):
+def linear_project(x, v, z):
 
+    x1, y1, z1 = x
+    vx, vy, vz = v
 
-# List of projected (x,y)s at each ECal layer
-def layerIntercepts(pos,mom,layerZs=ecal_layerZs):
-    return [projection(pos,mom,z) for z in layerZs]
+    if vz == 0:
+        return np.full(3, np.nan)
 
-# Magnitude of whatever
-def mag(iterable):
-    return math.sqrt(sum([x**2 for x in iterable]))
+    tc = (z - z1)/vz
+    if tc < 0:
+        return np.full(3, np.nan)
 
-# Return normalized np array
-def unit(arrayy):
-    return np.array(arrayy)/mag(arrayy)
+    x2 = vx*tc + x1
+    y2 = vy*tc + y1
+    z2 = z
 
-# Dot iterables
-def dot(i1, i2):
-    return sum( [i1[i]*i2[i] for i in range( len(i1) )] )
+    return np.array([x2, y2, z2])
 
-# Distance detween points
-def dist(p1, p2):
-    return math.sqrt(np.sum( ( np.array(p1) - np.array(p2) )**2 ))
+# Function to get the intercepts of a projected point for a collection of planes
+def get_projected_intercepts(x, v, zs):
+    return np.array([linear_project(x, v, z)[0:2] for z in zs])
+
+# Function to normalize an array
+def normalize(array):
+
+    norm = np.linalg.norm(array)
+    if norm == 0:
+        return np.full_like(array, np.nan)
+
+    return array/np.linalg.norm(array)
+
+# Function to calculate the Euclidean distance between two points
+def distance(x1, x2):
+    return np.sqrt(np.sum((x1 - x2)**2))
 
 # Distance between a point and the nearest point on a line defined by endpoints
 def distPtToLine(h1,p1,p2):
