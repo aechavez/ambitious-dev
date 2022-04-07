@@ -378,7 +378,7 @@ def linear_project(x, v, z):
 def get_projected_intercepts(x, v, zs):
     return np.array([linear_project(x, v, z)[0:2] for z in zs])
 
-# Function to normalize an array
+# Function to normalize a numpy array
 def normalize(array):
 
     norm = np.linalg.norm(array)
@@ -399,57 +399,62 @@ def distance_point_to_line(x, y1, y2):
     c = np.dot(x - y1, x - y1)
 
     if a == 0:
-        return np.nan
+        return np.sqrt(c)
 
-    return np.sqrt(c - (b**2)/a)
+    tc = -b/a
+    dist = np.sqrt(a*(tc**2) + 2*b*tc + c)
 
-# Minimum distance between lines, each line defined by two points
-def distTwoLines(h1,h2,p1,p2):
-    e1  = unit( h1 - h2 )
-    e2  = unit( p1 - p2 )
-    crs = np.cross(e1,e2) # Vec perp to both lines
-    if mag(crs) != 0:
-        return abs( np.dot( crs,h1-p1) )
-    else: # Lines are parallel; need different method
-        return mag( np.cross(e1,h1-p1) )
+    return dist
 
-# Angle between vectors (with z by default)
-def angle(vec, units, vec2=[0,0,1]):
-    if units=='degrees': return math.acos( dot( unit(vec), unit(vec2) ) )*180.0/math.pi
-    elif units=='radians': return math.acos( dot( unit(vec), unit(vec2) ) )
-    else: print('\nSpecify valid angle unit ("degrees" or "randians")')
+# Function to calculate the distance between two lines
+def distance_line_to_line(x1, x2, y1, y2):
+    
 
-# Get np.ndarray of hit position
-def pos(hit):
-    return np.array( ( hit.getXPos(), hit.getYPos(), hit.getZPos() ) )
+# Function to get the angle between two vectors
+def angle(u, v, units = 'radians'):
 
-###########################
-# Get hitID-related info
-###########################
+    uhat = normalize(u)
+    vhat = normalize(v)
 
-# Get layerID from ecal hit
+    if units == 'radians':
+        return np.arccos(np.dot(uhat, vhat))
+
+    elif units == 'degrees':
+        return (180./np.pi)*np.arccos(np.dot(uhat, vhat))
+
+# Function to get the position of a hit as a numpy array
+def get_position(hit):
+    return np.array([hit.getXPos(), hit.getYPos(), hit.getZPos()])
+
+
+##############################
+# Hit ID information
+##############################
+
+# Function to get layerID from ECal hit
 def ecal_layer(hit):
     return (hit.getID() >> ecal_LAYER_SHIFT) & ecal_LAYER_MASK
 
-# Get moduleID from ecal hit
+# Function to get moduleID from ECal hit
 def ecal_module(hit):
     return (hit.getID() >> ecal_MODULE_SHIFT) & ecal_MODULE_MASK
 
-# Get cellID from ecal hit
+# Function to get cellID from ECal hit
 def ecal_cell(hit):
     return (hit.getID() >> ecal_CELL_SHIFT) & ecal_CELL_MASK
 
-# Get sectionID from hcal hit
+# Function to get sectionID from HCal hit
 def hcal_section(hit):
     return (hit.getID() >> hcal_SECTION_SHIFT) & hcal_SECTION_MASK
 
-# Get layerID from hcal hit
+# Function to get layerID from HCal hit
 def hcal_layer(hit):
     return (hit.getID() >> hcal_LAYER_SHIFT) & hcal_LAYER_MASK
 
-# Get stripID from hcal hit
+# Function to get stripID from HCal hit
 def hcal_strip(hit):
     return (hit.getID() >> hcal_STRIP_SHIFT) & hcal_STRIP_MASK
+
 
 ###########################
 # Get e/g SP hit info
