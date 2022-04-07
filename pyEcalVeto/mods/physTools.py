@@ -388,13 +388,20 @@ def normalize(array):
     return array/np.linalg.norm(array)
 
 # Function to calculate the Euclidean distance between two points
-def distance(x1, x2):
-    return np.sqrt(np.sum((x1 - x2)**2))
+def distance(x, y):
+    return np.sqrt(np.dot(x - y, x - y))
 
-# Distance between a point and the nearest point on a line defined by endpoints
-def distPtToLine(h1,p1,p2):
-    return np.linalg.norm(np.cross((np.array(h1)-np.array(p1)),
-        (np.array(h1)-np.array(p2)))) / np.linalg.norm(np.array(p1)-np.array(p2))
+# Function to calculate the distance between a point and a line defined by two points
+def distance_point_to_line(x, y1, y2):
+
+    a = np.dot(y1 - y2, y1 - y2)
+    b = np.dot(y1 - y2, x - y1)
+    c = np.dot(x - y1, x - y1)
+
+    if a == 0:
+        return np.nan
+
+    return np.sqrt(c - (b**2)/a)
 
 # Minimum distance between lines, each line defined by two points
 def distTwoLines(h1,h2,p1,p2):
