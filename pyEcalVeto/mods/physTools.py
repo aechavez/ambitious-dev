@@ -343,6 +343,7 @@ nregions = 5
 class HitData:
 
     def __init__(self, position = None, layer = None):
+
         self.position = position
         self.layer = layer
 
@@ -357,70 +358,78 @@ def get_layerZ(hit):
     return ecal_layerZs[get_ecal_layer(hit)]
 
 # Function to project a point along a vector to a plane parallel to the XY-plane
-def linear_projection(x, v, z):
+def linear_projection(x, u, z):
 
     x1, y1, z1 = x
-    vx, vy, vz = v
+    ux, uy, uz = u
 
-    if vz == 0:
-        return np.full(3, np.nan)
+    if uz == 0: return np.full(3, np.nan)
 
-    tc = (z - z1)/vz
-    if tc < 0:
-        return np.full(3, np.nan)
+    tc = (z - z1)/uz
+    if tc < 0: return np.full(3, np.nan)
 
-    x2 = vx*tc + x1
-    y2 = vy*tc + y1
+    x2 = ux*tc + x1
+    y2 = uy*tc + y1
     z2 = z
 
     return np.array([x2, y2, z2])
 
 # Function to get the intercepts of a projected point for a collection of planes
-def get_projected_intercepts(x, v, zs):
+def get_projected_intercepts(x, u, zs):
 
-    return np.array([linear_projection(x, v, z)[0:2] for z in zs])
+    return np.array([linear_projection(x, u, z)[0:2] for z in zs])
 
 # Function to normalize a numpy array
 def normalize(array):
 
     norm = np.linalg.norm(array)
-    if norm == 0:
-        return array
+    if norm == 0: return array
 
-    return array/np.linalg.norm(array)
+    return array/norm
 
-# Function to calculate the distance between two points
+# Function to calculate the Euclidean distance between two points
 def distance(x, y):
 
-    return np.sqrt(np.dot(x - y, x - y))
+    return np.sqrt(np.sum((x - y)**2))
 
 # Function to calculate the distance between a point and a line defined by two points
 def distance_point_to_line(x, y1, y2):
 
-    a = np.dot(y2 - y1, y2 - y1)
-    b = np.dot(y2 - y1, x - y1)
-    c = np.dot(x - y1, x - y1)
+    norm = np.linalg.norm(y1 - y2)
+    if norm == 0: return distance(x, y1)
 
-    if a == 0:
-        return np.sqrt(c)
-
-    return np.sqrt(c - (b**2)/a)
+    return np.linalg.norm(np.cross(x - y1, x - y2))/norm
 
 # Function to calculate the distance between two lines
 def distance_line_to_line(x1, x2, y1, y2):
-    
+
+    xhat = normalize(x1 - x2)
+    yhat = normalize(y1 - y2)
+    cross = np.cross(xhat, yhat)
+    norm = np.linalg.norm(cross)
+
+    if norm == 0:
+
+        xnorm = np.linalg.norm(xhat)
+        ynorm = np.linalg.norm(yhat)
+
+        if xnorm == 0 and ynorm == 0: return distance(x1, y1)
+
+        elif xnorm == 0: return distance_point_to_line(x1, y1, y2)
+        elif ynorm == 0: return distance_point_to_line(y1, x1, x2)
+
+        return np.linalg.norm(np.cross(xhat, x1 - y1))
+
+    return -np.dot(cross, x1 - y1)/norm
 
 # Function to get the angle between two vectors
-def angle(u, v, units = 'radians'):
+def get_angle(u, v, units = 'radians'):
 
     uhat = normalize(u)
     vhat = normalize(v)
 
-    if units == 'radians':
-        return np.arccos(np.dot(uhat, vhat))
-
-    elif units == 'degrees':
-        return (180./np.pi)*np.arccos(np.dot(uhat, vhat))
+    if units == 'radians': return np.arccos(np.dot(uhat, vhat))
+    elif units == 'degrees': return (180./np.pi)*np.arccos(np.dot(uhat, vhat))
 
 # Function to get the position of a hit as a numpy array
 def get_position(hit):
@@ -434,39 +443,46 @@ def get_position(hit):
 
 # Function to get layerID from ECal hit
 def ecal_layer(hit):
+
     return (hit.getID() >> ecal_LAYER_SHIFT) & ecal_LAYER_MASK
 
 # Function to get moduleID from ECal hit
 def ecal_module(hit):
+
     return (hit.getID() >> ecal_MODULE_SHIFT) & ecal_MODULE_MASK
 
 # Function to get cellID from ECal hit
 def ecal_cell(hit):
+
     return (hit.getID() >> ecal_CELL_SHIFT) & ecal_CELL_MASK
 
 # Function to get sectionID from HCal hit
 def hcal_section(hit):
+
     return (hit.getID() >> hcal_SECTION_SHIFT) & hcal_SECTION_MASK
 
 # Function to get layerID from HCal hit
 def hcal_layer(hit):
+
     return (hit.getID() >> hcal_LAYER_SHIFT) & hcal_LAYER_MASK
 
 # Function to get stripID from HCal hit
 def hcal_strip(hit):
+
     return (hit.getID() >> hcal_STRIP_SHIFT) & hcal_STRIP_MASK
 
 
-###########################
-# Get e/g SP hit info
-###########################
+#########################################
+# Scoring plane hit information
+#########################################
 
-# Get electron target scoring plane hit
-def electronTargetSPHit(targetSPHits):
+# Function to get the hit from the primary electron at the
+# furthest downstream target scoring plane
+def get_electron_target_sp_hit(target_sp_hits):
 
-    targetSPHit = None
-    pmax = 0
-    for hit in targetSPHits:
+    pmax = 0.
+    target_sp_hit = None
+    for hit in target_sp_hits:
 
         if abs(hit.getPosition()[2] - sp_trigger_pad_down_l2_z) > 0.5*sp_thickness or\
                 hit.getMomentum()[2] <= 0 or\
@@ -474,18 +490,20 @@ def electronTargetSPHit(targetSPHits):
                 hit.getPdgID() != 11:
             continue
 
-        if mag(hit.getMomentum()) > pmax:
-            targetSPHit = hit
-            pmax = mag(targetSPHit.getMomentum())
+        p = np.linalg.norm(np.array(hit.getMomentum()))
+        if p > pmax:
+            target_sp_hit = hit
+            pmax = p
 
-    return targetSPHit
+    return target_sp_hit
 
-# Get electron ecal scoring plane hit
-def electronEcalSPHit(ecalSPHits):
+# Function to get the electron scoring plane hit
+# at the front ECal scoring plane
+def get_electron_ecal_sp_hit(ecal_sp_hits):
 
-    eSPHit = None
-    pmax = 0
-    for hit in ecalSPHits:
+    pmax = 0.
+    ecal_sp_hit = None
+    for hit in ecal_sp_hits:
 
         if abs(hit.getPosition()[2] - sp_ecal_front_z) > 0.5*sp_thickness or\
                 hit.getMomentum()[2] <= 0 or\
@@ -493,49 +511,35 @@ def electronEcalSPHit(ecalSPHits):
                 hit.getPdgID() != 11:
             continue
 
-        if mag(hit.getMomentum()) > pmax:
-            eSPHit = hit
-            pmax = mag(eSPHit.getMomentum())
+        p = np.linalg.norm(np.array(hit.getMomentum()))
+        if p > pmax:
+            ecal_sp_hit = hit
+            pmax = p
 
-    return eSPHit
+    return ecal_sp_hit
 
-# Get electron target and ecal SP hits
-def electronSPHits(ecalSPHits, targetSPHits):
+# Function to infer the photonuclear photon's position and momentum
+# at the target scoring plane
+def infer_photon_information(target_sp_hit):
 
-    ecalSPHit   = electronEcalSPHit(ecalSPHits)
-    targetSPHit = electronTargetSPHit(tartgetSPHits)
+    return target_sp_hit.getPosition(), np.array([0., 0., 4000.])\
+                                        - np.array(target_sp_hit.getMomentum())
 
-    return ecalSPHit, targetSPHit
+# Function to get the photon scoring plane hit at the ECal scoring plane
+def get_photon_ecal_sp_hit(ecal_sp_hits):
 
-# Return photon position and momentum at target
-def gammaTargetInfo(eTargetSPHit):
-
-    gTarget_pvec = np.array([0,0,4000]) - np.array(eTargetSPHit.getMomentum())
-
-    return eTargetSPHit.getPosition(), gTarget_pvec
-
-# Get photon ecal scoring plane hit
-def gammaEcalSPHit(ecalSPHits):
-
-    gSPHit = None
-    pmax = 0
-    for hit in ecalSPHits:
+    pmax = 0.
+    ecal_sp_hit = None
+    for hit in ecal_sp_hits:
 
         if abs(hit.getPosition()[2] - sp_ecal_front_z) > 0.5*sp_thickness or\
                 hit.getMomentum()[2] <= 0 or\
-                not (hit.getPdgID() in [-22,22]):
+                not (hit.getPdgID() in [-22, 22]):
             continue
 
-        if mag(hit.getMomentum()) > pmax:
-            gSPHit = hit
-            pmax = mag(gSPHit.getMomentum())
+        p = np.linalg.norm(np.array(hit.getMomentum()))
+        if p > pmax:
+            ecal_sp_hit = hit
+            pmax = p
 
-    return gSPHit
-
-# Get electron and photon ecal scoring plane hits
-def elec_gamma_ecalSPHits(ecalSPHits):
-
-    eSPHit = electronEcalSPHit(ecalSPHits)
-    gSPHit = gammaEcalSPHit(ecalSPHits)
-
-    return eSPHit, gSPHit
+    return ecal_sp_hit
