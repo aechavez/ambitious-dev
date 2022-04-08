@@ -353,10 +353,11 @@ class HitData:
 
 # Function to get the layerZ of a hit
 def get_layerZ(hit):
+
     return ecal_layerZs[get_ecal_layer(hit)]
 
 # Function to project a point along a vector to a plane parallel to the XY-plane
-def linear_project(x, v, z):
+def linear_projection(x, v, z):
 
     x1, y1, z1 = x
     vx, vy, vz = v
@@ -376,35 +377,34 @@ def linear_project(x, v, z):
 
 # Function to get the intercepts of a projected point for a collection of planes
 def get_projected_intercepts(x, v, zs):
-    return np.array([linear_project(x, v, z)[0:2] for z in zs])
+
+    return np.array([linear_projection(x, v, z)[0:2] for z in zs])
 
 # Function to normalize a numpy array
 def normalize(array):
 
     norm = np.linalg.norm(array)
     if norm == 0:
-        return np.full_like(array, np.nan)
+        return array
 
     return array/np.linalg.norm(array)
 
-# Function to calculate the Euclidean distance between two points
+# Function to calculate the distance between two points
 def distance(x, y):
+
     return np.sqrt(np.dot(x - y, x - y))
 
 # Function to calculate the distance between a point and a line defined by two points
 def distance_point_to_line(x, y1, y2):
 
-    a = np.dot(y1 - y2, y1 - y2)
-    b = np.dot(y1 - y2, x - y1)
+    a = np.dot(y2 - y1, y2 - y1)
+    b = np.dot(y2 - y1, x - y1)
     c = np.dot(x - y1, x - y1)
 
     if a == 0:
         return np.sqrt(c)
 
-    tc = -b/a
-    dist = np.sqrt(a*(tc**2) + 2*b*tc + c)
-
-    return dist
+    return np.sqrt(c - (b**2)/a)
 
 # Function to calculate the distance between two lines
 def distance_line_to_line(x1, x2, y1, y2):
@@ -424,6 +424,7 @@ def angle(u, v, units = 'radians'):
 
 # Function to get the position of a hit as a numpy array
 def get_position(hit):
+
     return np.array([hit.getXPos(), hit.getYPos(), hit.getZPos()])
 
 
