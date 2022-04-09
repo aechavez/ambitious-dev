@@ -1,5 +1,5 @@
 import numpy as np
-from mods import physTools
+from modules import physTools
 
 
 # NOTE: Don't forget to order hits by reverse zpos before using the nXTracks funcs
