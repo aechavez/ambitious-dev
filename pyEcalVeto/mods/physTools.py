@@ -416,8 +416,8 @@ def distance_line_to_line(x1, x2, y1, y2):
 
     return abs(np.dot(cross, x1 - y1)/norm)
 
-# Function to get the angle between two vectors
-def get_angle(u, v, units = 'radians'):
+# Function to calculate the angle between two vectors
+def angle(u, v, units = 'radians'):
 
     uhat = normalize(u)
     vhat = normalize(v)
@@ -431,27 +431,27 @@ def get_angle(u, v, units = 'radians'):
 ##############################
 
 # Function to get the layer ID from a ECal hit
-def ecal_layer(hit):
+def get_ecal_layer(hit):
     return (hit.getID() >> ecal_LAYER_SHIFT) & ecal_LAYER_MASK
 
 # Function to get the module ID from a ECal hit
-def ecal_module(hit):
+def get_ecal_module(hit):
     return (hit.getID() >> ecal_MODULE_SHIFT) & ecal_MODULE_MASK
 
 # Function to get the cell ID from a ECal hit
-def ecal_cell(hit):
+def get_ecal_cell(hit):
     return (hit.getID() >> ecal_CELL_SHIFT) & ecal_CELL_MASK
 
 # Function to get the section ID from a HCal hit
-def hcal_section(hit):
+def get_hcal_section(hit):
     return (hit.getID() >> hcal_SECTION_SHIFT) & hcal_SECTION_MASK
 
 # Function to get the layer ID from a HCal hit
-def hcal_layer(hit):
+def get_hcal_layer(hit):
     return (hit.getID() >> hcal_LAYER_SHIFT) & hcal_LAYER_MASK
 
 # Function to get the strip ID from a HCal hit
-def hcal_strip(hit):
+def get_hcal_strip(hit):
     return (hit.getID() >> hcal_STRIP_SHIFT) & hcal_STRIP_MASK
 
 
