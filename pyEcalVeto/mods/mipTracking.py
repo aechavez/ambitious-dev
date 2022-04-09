@@ -1,4 +1,3 @@
-import math
 import numpy as np
 from mods import physTools
 
@@ -17,13 +16,13 @@ def nearPhotonInfo(trackingHitList, g_trajectory, returnLayer=True, returnNumber
     for hit in trackingHitList:
 
         # Near the photn trajectory
-        if physTools.dist( physTools.pos(hit)[:2],
-                g_trajectory[ physTools.ecal_layer( hit ) ] ) < physTools.cellWidth:
+        if physTools.distance( physTools.get_position(hit)[:2],
+                g_trajectory[ physTools.get_ecal_layer( hit ) ] ) < physTools.cell_width:
             n += 1
 
             # Earliest layer
-            if physTools.ecal_layer( hit ) < layer:
-                layer = physTools.ecal_layer( hit )
+            if physTools.get_ecal_layer( hit ) < layer:
+                layer = physTools.get_ecal_layer( hit )
 
     # Prepare and return desired output
     out = []
@@ -56,10 +55,10 @@ def findStraightTracks(hitlist, etraj_ends, ptraj_ends,\
                 possibleNeigh = False
                 continue
             neighFound = (
-                    (physTools.layerofHitZ(h.getZPos()) ==\
-                            physTools.layerofHitZ(currenthit.getZPos()) - 1 or\
-                     physTools.layerofHitZ(h.getZPos()) ==\
-                            physTools.layerofHitZ(currenthit.getZPos()) -2) and\
+                    (physTools.get_ecal_layer(h) ==\
+                            physTools.get_ecal_layer(currenthit) - 1 or\
+                     physTools.get_ecal_layer(h) ==\
+                            physTools.get_ecal_layer(currenthit) -2) and\
                      h.getXPos() == currenthit.getXPos() and\
                      h.getYPos() == currenthit.getYPos() )
             if neighFound:
@@ -72,17 +71,17 @@ def findStraightTracks(hitlist, etraj_ends, ptraj_ends,\
         # If it's exactly the min, it has to be very close to ptraj
         if len(track) == mst: 
             for hitt in track:
-                if physTools.distPtToLine( physTools.pos(hitt),
-                        ptraj_ends[0], ptraj_ends[1] ) > physTools.cellWidth - 0.5:
+                if physTools.distance_point_to_line( physTools.get_position(hitt),
+                        ptraj_ends[0], ptraj_ends[1] ) > physTools.cell_width - 0.5:
                     break
                 continue
 
         # Check that the track approaches the photon's and not the electron's
         trk_s = np.array( (track[ 0].getXPos(), track[ 0].getYPos(), track[ 0].getZPos() ) )
         trk_e = np.array( (track[-1].getXPos(), track[-1].getYPos(), track[-1].getZPos() ) )
-        closest_e = physTools.distTwoLines( etraj_ends[0], etraj_ends[1], trk_s, trk_e )
-        closest_p = physTools.distTwoLines( ptraj_ends[0], ptraj_ends[1], trk_s, trk_e )
-        if closest_p > physTools.cellWidth and closest_e < 2*physTools.cellWidth:
+        closest_e = physTools.distance_line_to_line( etraj_ends[0], etraj_ends[1], trk_s, trk_e )
+        closest_p = physTools.distance_line_to_line( ptraj_ends[0], ptraj_ends[1], trk_s, trk_e )
+        if closest_p > physTools.cell_width and closest_e < 2*physTools.cell_width:
             continue
 
         # Remove hits in current track from further consideration
@@ -111,7 +110,7 @@ def findStraightTracks(hitlist, etraj_ends, ptraj_ends,\
             trk_s = np.array( (track[ 0].getXPos(), track[ 0].getYPos(),
                                                     track[ 0].getZPos() ) )
             # If head+tail are w/in one cell of each other
-            if physTools.dist( trk_e, trk_s ) < physTools.cellWidth:
+            if physTools.distance( trk_e, trk_s ) < physTools.cell_width:
                 for hit in trk_:
                     trk.append(hit)
                 strtracklist.remove(trk_)
@@ -127,82 +126,3 @@ def findStraightTracks(hitlist, etraj_ends, ptraj_ends,\
     if returnTracks: out.append( strtracklist )
 
     return out
-
-
-# Based on C++ Analyzer
-def nStraightTracks_c(trackingHitList, e_traj_ends, g_traj_ends):
-
-    nTracks = 0
-
-    # Seed a track with each hit
-    iHit = 0
-    while iHit < len(trackingHitList):
-        track = 34*[999]
-        track[0] = iHit
-        currentHit = iHit
-        trackLen = 1        
-
-        # Search for hits in next two layers
-        jHit = 0
-        while jHit < len(trackingHitList):
-
-            if trackingHitList[jHit].layer == trackingHitList[currentHit].layer or\
-                    trackingHitList[jHit].layer > trackingHitList[currentHit].layer + 2:
-                jHit += 1 # Don't keep checking this hit over and over again
-                continue # Continue if not in the right range
-
-            # If it's also directly behind the current hit, add it to the current track
-            if trackingHitList[jHit].pos[:1] == trackingHitList[currentHit].pos[:1]:
-                track[trackLen] = jHit
-                currentHit = jHit # Update end of track
-                trackLen += 1
-
-            jHit += 1 # Move j along
-
-        # Confirm if track is valid
-        if trackLen >= 2: # Set min track length
-            
-            # Make sure the track is near the photon trajectory and away from the electron
-            closest_e = physTools.distTwoLines( trackingHitList[ track[0         ] ].pos,
-                                                trackingHitList[ track[trackLen-1] ].pos,
-                                                e_traj_ends[0], e_traj_ends[1]
-                                              )
-            closest_g = physTools.distTwoLines( trackingHitList[ track[0         ] ].pos,
-                                                trackingHitList[ track[trackLen-1] ].pos,
-                                                g_traj_ends[0], g_traj_ends[1]
-                                              )
-            if closest_g > physTools.cellWidth and closest_e < 2*physTools.cellWidth:
-                iHit += 1; continue
-            if trackLen < 4 and closest_e > closest_g:
-                iHit += 1; continue
-
-            # If valid track is found, remove hits in track from hitList
-            for kHit in range(trackLen):
-                trackingHitList.pop( track[kHit] - kHit) 
-
-            # nStraightTracks++
-            nTracks += 1
-
-            # Decrease iHit because the *current" seed will have been removed
-            iHit -= 1
-
-        iHit += 1 # Move iHit along
-
-        # Possibley merge tracks later
-
-    # return the trackingHitlist as is so Linreg doesn't look through 'removed' points
-    return nTracks, trackingHitList
-
-##########################
-# Linreg tracks
-##########################
-
-# Not in v9 feature list so postponing this
-def nLinregTracks(trackingHitList, e_traj_ends, g_traj_ends):
-
-    nTracks = 0
-
-    # Seed a track with each hit
-    iHit = 0
-
-    return 0
