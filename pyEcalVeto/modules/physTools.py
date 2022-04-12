@@ -340,7 +340,9 @@ nregions = 5
 
 # Simple class for storing hit data
 class HitData:
+
     def __init__(self, position = None, layer = None):
+
         self.position = position
         self.layer = layer
 
@@ -351,10 +353,12 @@ class HitData:
 
 # Function to get the position of a hit as a numpy array
 def get_position(hit):
+
     return np.array([hit.getXPos(), hit.getYPos(), hit.getZPos()])
 
 # Function to get the layerZ of a hit
 def get_layerZ(hit):
+
     return ecal_layerZs[get_ecal_layer(hit)]
 
 # Function to linearly project a point along a vector to a plane parallel to the XY-plane
@@ -376,6 +380,7 @@ def linear_projection(x, u, z):
 
 # Function to get the intercepts for a point projected through a collection of planes
 def get_projected_intercepts(x, u, zs):
+
     return np.array([linear_projection(x, u, z)[0:2] for z in zs])
 
 # Function to normalize a vector
@@ -388,6 +393,7 @@ def normalize(u):
 
 # Function to calculate the Euclidean distance between two points
 def distance(x, y):
+
     return np.sqrt(np.sum((x - y)**2))
 
 # Function to calculate the distance between a point a line
@@ -432,26 +438,32 @@ def angle(u, v, units = 'radians'):
 
 # Function to get the layer ID from a ECal hit
 def get_ecal_layer(hit):
+
     return (hit.getID() >> ecal_LAYER_SHIFT) & ecal_LAYER_MASK
 
 # Function to get the module ID from a ECal hit
 def get_ecal_module(hit):
+
     return (hit.getID() >> ecal_MODULE_SHIFT) & ecal_MODULE_MASK
 
 # Function to get the cell ID from a ECal hit
 def get_ecal_cell(hit):
+
     return (hit.getID() >> ecal_CELL_SHIFT) & ecal_CELL_MASK
 
 # Function to get the section ID from a HCal hit
 def get_hcal_section(hit):
+
     return (hit.getID() >> hcal_SECTION_SHIFT) & hcal_SECTION_MASK
 
 # Function to get the layer ID from a HCal hit
 def get_hcal_layer(hit):
+
     return (hit.getID() >> hcal_LAYER_SHIFT) & hcal_LAYER_MASK
 
 # Function to get the strip ID from a HCal hit
 def get_hcal_strip(hit):
+
     return (hit.getID() >> hcal_STRIP_SHIFT) & hcal_STRIP_MASK
 
 
@@ -504,6 +516,7 @@ def get_electron_ecal_sp_hit(ecal_sp_hits):
 # Function to infer the photonuclear photon's position and momentum
 # at the target scoring plane
 def infer_photon_info(target_sp_hit):
+
     return target_sp_hit.getPosition(), np.array([0., 0., 4000.])\
                                         - np.array(target_sp_hit.getMomentum())
 
