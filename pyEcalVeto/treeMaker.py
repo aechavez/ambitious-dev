@@ -2,154 +2,160 @@ import os
 import math
 import ROOT as r
 import numpy as np
-from mods import ROOTmanager as manager
-from mods import physTools, mipTracking
-cellMap = np.loadtxt('mods/cellmodule.txt')
+from modules import physTools, mipTracking
+from modules import rootManager as manager
+
+cell_map = np.loadtxt('modules/cellModule.txt')
 r.gSystem.Load('libFramework.so')
 
-# TreeModel to build here
-branches_info = {
-        # Base variables
-        'nReadoutHits':              {'rtype': int,   'default': 0 },
-        'summedDet':                 {'rtype': float, 'default': 0.},
-        'summedTightIso':            {'rtype': float, 'default': 0.},
-        'maxCellDep':                {'rtype': float, 'default': 0.},
-        'showerRMS':                 {'rtype': float, 'default': 0.},
-        'xStd':                      {'rtype': float, 'default': 0.},
-        'yStd':                      {'rtype': float, 'default': 0.},
-        'avgLayerHit':               {'rtype': float, 'default': 0.},
-        'stdLayerHit':               {'rtype': float, 'default': 0.},
-        'deepestLayerHit':           {'rtype': int,   'default': 0 },
-        'ecalBackEnergy':            {'rtype': float, 'default': 0.},
-        # MIP tracking variables
-        'straight4':                 {'rtype': int,   'default': 0 },
-        'firstNearPhLayer':          {'rtype': int,   'default': 33},
-        'nNearPhHits':               {'rtype': int,   'default': 0 },
-        'fullElectronTerritoryHits': {'rtype': int,   'default': 0 },
-        'fullPhotonTerritoryHits':   {'rtype': int,   'default': 0 },
-        'fullTerritoryRatio':        {'rtype': float, 'default': 1.},
-        'electronTerritoryHits':     {'rtype': int,   'default': 0 },
-        'photonTerritoryHits':       {'rtype': int,   'default': 0 },
-        'TerritoryRatio':            {'rtype': float, 'default': 1.}
-        #'epSep':                    {'rtype': float, 'default': 0.},
-        #'epDot':                    {'rtype': float, 'default': 0.}
-        }
+# Branch information to build tree models
+branch_information = {
 
-for i in range(1, physTools.nSegments + 1):
+    # Fernand variables
+    'nReadoutHits':              {'dtype': int,   'default': 0 },
+    'summedDet':                 {'dtype': float, 'default': 0.},
+    'summedTightIso':            {'dtype': float, 'default': 0.},
+    'maxCellDep':                {'dtype': float, 'default': 0.},
+    'showerRMS':                 {'dtype': float, 'default': 0.},
+    'xStd':                      {'dtype': float, 'default': 0.},
+    'yStd':                      {'dtype': float, 'default': 0.},
+    'avgLayerHit':               {'dtype': float, 'default': 0.},
+    'stdLayerHit':               {'dtype': float, 'default': 0.},
+    'deepestLayerHit':           {'dtype': int,   'default': 0 },
+    'ecalBackEnergy':            {'dtype': float, 'default': 0.},
+
+    # MIP tracking variables
+    'straight4':                 {'dtype': int,   'default': 0 },
+    'firstNearPhLayer':          {'dtype': int,   'default': 33},
+    'nNearPhHits':               {'dtype': int,   'default': 0 },
+    'fullElectronTerritoryHits': {'dtype': int,   'default': 0 },
+    'fullPhotonTerritoryHits':   {'dtype': int,   'default': 0 },
+    'fullTerritoryRatio':        {'dtype': float, 'default': 1.},
+    'electronTerritoryHits':     {'dtype': int,   'default': 0 },
+    'photonTerritoryHits':       {'dtype': int,   'default': 0 },
+    'TerritoryRatio':            {'dtype': float, 'default': 1.},
+    'epSep':                     {'dtype': float, 'default': 0.},
+    'epDot':                     {'dtype': float, 'default': 0.}
+
+}
+
+for i in range(1, physTools.nsegments + 1):
 
     # Longitudinal segment variables
-    branches_info['energy_s{}'.format(i)]          = {'rtype': float, 'default': 0.}
-    branches_info['nHits_s{}'.format(i)]           = {'rtype': int,   'default': 0 }
-    branches_info['xMean_s{}'.format(i)]           = {'rtype': float, 'default': 0.}
-    branches_info['yMean_s{}'.format(i)]           = {'rtype': float, 'default': 0.}
-    branches_info['layerMean_s{}'.format(i)]       = {'rtype': float, 'default': 0.}
-    branches_info['xStd_s{}'.format(i)]            = {'rtype': float, 'default': 0.}
-    branches_info['yStd_s{}'.format(i)]            = {'rtype': float, 'default': 0.}
-    branches_info['layerStd_s{}'.format(i)]        = {'rtype': float, 'default': 0.}
+    branch_information['energy_s{}'.format(i)]    = {'dtype': float, 'default': 0.}
+    branch_information['nHits_s{}'.format(i)]     = {'dtype': int,   'default': 0 }
+    branch_information['xMean_s{}'.format(i)]     = {'dtype': float, 'default': 0.}
+    branch_information['yMean_s{}'.format(i)]     = {'dtype': float, 'default': 0.}
+    branch_information['layerMean_s{}'.format(i)] = {'dtype': float, 'default': 0.}
+    branch_information['xStd_s{}'.format(i)]      = {'dtype': float, 'default': 0.}
+    branch_information['yStd_s{}'.format(i)]      = {'dtype': float, 'default': 0.}
+    branch_information['layerStd_s{}'.format(i)]  = {'dtype': float, 'default': 0.}
 
-    for j in range(1, physTools.nRegions + 1):
+    for j in range(1, physTools.nregions + 1):
 
         # Electron RoC variables
-        branches_info['eContEnergy_x{}_s{}'.format(j,i)]    = {'rtype': float, 'default': 0.}
-        branches_info['eContNHits_x{}_s{}'.format(j,i)]     = {'rtype': int,   'default': 0 }
-        branches_info['eContXMean_x{}_s{}'.format(j,i)]     = {'rtype': float, 'default': 0.}
-        branches_info['eContYMean_x{}_s{}'.format(j,i)]     = {'rtype': float, 'default': 0.}
-        branches_info['eContLayerMean_x{}_s{}'.format(j,i)] = {'rtype': float, 'default': 0.}
-        branches_info['eContXStd_x{}_s{}'.format(j,i)]      = {'rtype': float, 'default': 0.}
-        branches_info['eContYStd_x{}_s{}'.format(j,i)]      = {'rtype': float, 'default': 0.}
-        branches_info['eContLayerStd_x{}_s{}'.format(j,i)]  = {'rtype': float, 'default': 0.}
+        branch_information['eContEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
+        branch_information['eContNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
+        branch_information['eContXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['eContYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['eContLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
+        branch_information['eContXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['eContYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['eContLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
         # Photon RoC variables
-        branches_info['gContEnergy_x{}_s{}'.format(j,i)]    = {'rtype': float, 'default': 0.}
-        branches_info['gContNHits_x{}_s{}'.format(j,i)]     = {'rtype': int,   'default': 0 }
-        branches_info['gContXMean_x{}_s{}'.format(j,i)]     = {'rtype': float, 'default': 0.}
-        branches_info['gContYMean_x{}_s{}'.format(j,i)]     = {'rtype': float, 'default': 0.}
-        branches_info['gContLayerMean_x{}_s{}'.format(j,i)] = {'rtype': float, 'default': 0.}
-        branches_info['gContXStd_x{}_s{}'.format(j,i)]      = {'rtype': float, 'default': 0.}
-        branches_info['gContYStd_x{}_s{}'.format(j,i)]      = {'rtype': float, 'default': 0.}
-        branches_info['gContLayerStd_x{}_s{}'.format(j,i)]  = {'rtype': float, 'default': 0.}
+        branch_information['gContEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
+        branch_information['gContNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
+        branch_information['gContXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['gContYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['gContLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
+        branch_information['gContXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['gContYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['gContLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
         # Outside RoC variables
-        branches_info['oContEnergy_x{}_s{}'.format(j,i)]    = {'rtype': float, 'default': 0.}
-        branches_info['oContNHits_x{}_s{}'.format(j,i)]     = {'rtype': int,   'default': 0 }
-        branches_info['oContXMean_x{}_s{}'.format(j,i)]     = {'rtype': float, 'default': 0.}
-        branches_info['oContYMean_x{}_s{}'.format(j,i)]     = {'rtype': float, 'default': 0.}
-        branches_info['oContLayerMean_x{}_s{}'.format(j,i)] = {'rtype': float, 'default': 0.}
-        branches_info['oContXStd_x{}_s{}'.format(j,i)]      = {'rtype': float, 'default': 0.}
-        branches_info['oContYStd_x{}_s{}'.format(j,i)]      = {'rtype': float, 'default': 0.}
-        branches_info['oContLayerStd_x{}_s{}'.format(j,i)]  = {'rtype': float, 'default': 0.}
+        branch_information['oContEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
+        branch_information['oContNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
+        branch_information['oContXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['oContYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['oContLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
+        branch_information['oContXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['oContYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['oContLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
+# Main subroutine
 def main():
 
-    # Inputs and their trees and stuff
-    pdict = manager.parse()
-    batch_mode = pdict['batch']
-    separate = pdict['separate']
-    inlist = pdict['inlist']
-    outlist = pdict['outlist']
-    group_labels = pdict['groupls']
-    startEvent = pdict['startEvent']
-    maxEvents = pdict['maxEvents']
-    # Should maybe put in parsing eventually and make event_process *arg
+    # Parse the arguments passed by the user
+    parsing_dict = manager.parse()
+    batch_mode = parsing_dict['batch_mode']
+    separate_categories = parsing_dict['separate_categories']
+    inputs = parsing_dict['inputs']
+    group_labels = parsing_dict['group_labels']
+    outputs = parsing_dict['outputs']
+    start_event = parsing_dict['start_event']
+    max_events = parsing_dict['max_events']
 
-    # Construct tree processes
-    procs = []
-    for gl, group in zip(group_labels,inlist):
-        procs.append( manager.TreeProcess(event_process, group,
-                                          ID=gl, batch=batch_mode, pfreq=100) )
+    # Build each process
+    processes = []
+    for label, group in zip(group_labels, inputs):
+        processes.append(manager.TreeProcess(process_event, file_group = group, name_tag = label,\
+                                             start_event = start_event, max_events = max_events,\
+                                             batch_mode = batch_mode))
 
-    # Process jobs
-    for proc in procs:
+    # Run each process
+    for process in processes:
 
-        # Move into appropriate scratch dir
-        os.chdir(proc.tmp_dir)
+        # Move into the appropriate temporary directory
+        os.chdir(process.temporary_directory)
 
-        # Branches needed
-        proc.ecalVeto     = proc.addBranch('EcalVetoResult', 'EcalVeto_v12')
-        proc.targetSPHits = proc.addBranch('SimTrackerHit', 'TargetScoringPlaneHits_v12')
-        proc.ecalSPHits   = proc.addBranch('SimTrackerHit', 'EcalScoringPlaneHits_v12')
-        proc.ecalRecHits  = proc.addBranch('EcalHit', 'EcalRecHits_v12')
+        # Add branches needed for BDT analysis
+        process.ecal_veto = process.add_branch('EcalVetoResult', 'EcalVeto_v12')
+        process.target_sp_hits = process.add_branch('SimTrackerHit', 'TargetScoringPlaneHits_v12')
+        process.ecal_sp_hits = process.add_branch('SimTrackerHit', 'EcalScoringPlaneHits_v12')
+        process.ecal_rec_hits = process.add_branch('EcalHit', 'EcalRecHits_v12')
 
-        # Tree/Files(s) to make
-        print('\nRunning %s'%(proc.ID))
+        process.separate_categories = separate_categories
 
-        proc.separate = separate
+        if process.separate_categories:
+            process.tree_models = {
+                'electron_photon_fiducial': None,
+                'electron_fiducial': None,
+                'photon_fiducial': None,
+                'non_fiducial': None
+            }
+        else:
+            process.tree_models = {'unsorted': None}
 
-        proc.tfMakers = {'unsorted': None}
-        if proc.separate:
-            proc.tfMakers = {
-                'egin': None,
-                'ein': None,
-                'gin': None,
-                'none': None
-                }
+        for tree_model in process.tree_models:
+            process.tree_models[tree_model] = manager.TreeMaker('{}_{}.root'.format(group_labels[processes.index(process)], tree_model),\
+                                                                'EcalVeto', branch_information = branch_information,\
+                                                                out_directory = outputs[processes.index(process)])
 
-        for tfMaker in proc.tfMakers:
-            proc.tfMakers[tfMaker] = manager.TreeMaker(group_labels[procs.index(proc)]+\
-                                        '_{}.root'.format(tfMaker),\
-                                        "EcalVeto",\
-                                        branches_info,\
-                                        outlist[procs.index(proc)]
-                                        )
+        # Set closing functions
+        process.closing_functions = [process.tree_models[tree_model].write\
+                                     for tree_model in process.tree_models]
 
-        # Gets executed at the end of run()
-        proc.extrafs = [ proc.tfMakers[tfMaker].wq for tfMaker in proc.tfMakers ]
+        # Run this process
+        process.run()
 
-        # RUN
-        proc.run(strEvent=startEvent, maxEvents=maxEvents)
+    # Remove the scratch directory if there is one
+    # (Being careful not to break other jobs if we are in batch mode)
+    if not batch_mode:
+        manager.remove_scratch()
 
-    # Remove scratch directory if there is one
-    if not batch_mode:     # Don't want to break other batch jobs when one finishes
-        manager.rmScratch()
+    print('\n[ INFO ] - All processes done!')
 
-    print('\nDone!\n')
+# Subroutine to process an event
+def process_event(self):
 
+    # Reset the branch values for each tree model
+    for tree_model in self.tree_models:
+        self.tree_models[tree_model].reset_values()
 
-# Process an event
-def event_process(self):
-
-    # Initialize BDT input variables w/ defaults
-    feats = next(iter(self.tfMakers.values())).resetFeats()
+    # Initialize a dictionary of new values
+    # (Just grab from the first tree model, since they're identical)
+    new_values = self.tree_models[next(iter(self.tree_models))].branches
 
     # Assign pre-computed variables
     feats['nReadoutHits']       = self.ecalVeto.getNReadoutHits()
