@@ -177,7 +177,7 @@ class TreeProcess:
     # Method to process events
     def run(self, start_event = 0, max_events = -1, print_frequency = 1000):
 
-        print('\n[ INFO ] - Starting event process')
+        print('\n[ INFO ] - Running tree process with name tag: {}'.format(self.name_tag))
 
         # Reset some attributes if desired
         if start_event != self.start_event: self.start_event = start_event
