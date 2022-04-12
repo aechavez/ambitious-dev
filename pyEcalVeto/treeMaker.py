@@ -162,45 +162,43 @@ def process_event(self):
     ###########################################
 
     # Get the electron's position and momentum at the ECal
-    electron_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
-    if electron_ecal_sp_hit != None:
-        electron_ecal_sp_pos, electron_ecal_sp_mom = physTools.get_position(electron_ecal_sp_hit),\
-                                                     physTools.get_momentum(electron_ecal_sp_hit)
+    ele_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
+    if ele_ecal_sp_hit != None:
+        ele_ecal_sp_pos, ele_ecal_sp_mom = physTools.get_position(ele_ecal_sp_hit),
+                                           physTools.get_momentum(ele_ecal_sp_hit)
 
     # Infer the photon's position and momentum at the target
-    electron_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hit)
-    if electron_target_sp_hit != None:
-        photon_target_sp_pos, photon_target_sp_mom = physTools.infer_photon_info(electron_target_sp_hit)
+    ele_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hit)
+    if ele_target_sp_hit != None:
+        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_info(ele_target_sp_hit)
     else:
         print('\n[ WARNING ] - No electron found at the target scoring plane!')
-        photon_target_sp_pos = photon_target_sp_mom = np.zeros(3)
+        pho_target_sp_pos = pho_target_sp_mom = np.zeros(3)
 
     # Use linear projections to infer the electron and photon trajectories
-    electron_trajectory = photon_trajectory = None
+    ele_traj = pho_traj = None
 
-    if electron_ecal_sp_hit != None:
-        electron_trajectory = physTools.get_projected_intercepts(electron_ecal_sp_pos,\
-                                                                 electron_ecal_sp_mom,\
-                                                                 physTools.ecal_layerZs)
+    if ele_ecal_sp_hit != None:
+        ele_traj = physTools.get_projected_intercepts(ele_ecal_sp_pos, ele_ecal_sp_mom,\
+                                                      physTools.ecal_layerZs)
 
     if electron_target_sp_hit != None:
-        photon_trajectory = physTools.get_projected_intercepts(photon_target_sp_pos,\
-                                                               photon_target_sp_mom,\
-                                                               physTools.ecal_layerZs)
+        pho_traj = physTools.get_projected_intercepts(pho_target_sp_pos, pho_target_sp_mom,\
+                                                      physTools.ecal_layerZs)
 
     # If desired, determine which fiducial category the event belongs to
     if self.separate_categories:
         fiducial_electron = fiducial_photon = False
 
-        if electron_trajectory != None:
+        if ele_traj != None:
             for cell in cell_map:
-                if physTools.distance(np.array(cell[1:]), electron_trajectory[0]) <= physTools.cell_radius:
+                if physTools.distance(np.array(cell[1:]), ele_traj[0]) <= physTools.cell_radius:
                     fiducial_electron = True
                     break
 
-        if photon_trajectory != None:
+        if pho_traj != None:
             for cell in cell_map:
-                if physTools.distance(np.array(cell[1:]), photon_trajectory[0]) <= physTools.cell_radius:
+                if physTools.distance(np.array(cell[1:]), pho_traj[0]) <= physTools.cell_radius:
                     fiducial_photon = True
                     break
 
