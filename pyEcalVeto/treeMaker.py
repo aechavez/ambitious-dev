@@ -119,9 +119,9 @@ def main():
 
         if process.separate_categories:
             process.tree_models = {
-                'electron_photon_fiducial': None,
-                'electron_fiducial': None,
-                'photon_fiducial': None,
+                'fiducial_electron_photon': None,
+                'fiducial_electron': None,
+                'fiducial_photon': None,
                 'non_fiducial': None
             }
         else:
@@ -156,61 +156,69 @@ def process_event(self):
     # Initialize a dictionary of new values
     # (Just grab from the first tree model, since they're identical)
     new_values = self.tree_models[next(iter(self.tree_models))].branches
-
-    # Assign pre-computed variables
-    feats['nReadoutHits']       = self.ecalVeto.getNReadoutHits()
-    feats['summedDet']          = self.ecalVeto.getSummedDet()
-    feats['summedTightIso']     = self.ecalVeto.getSummedTightIso()
-    feats['maxCellDep']         = self.ecalVeto.getMaxCellDep()
-    feats['showerRMS']          = self.ecalVeto.getShowerRMS()
-    feats['xStd']               = self.ecalVeto.getXStd()
-    feats['yStd']               = self.ecalVeto.getYStd()
-    feats['avgLayerHit']        = self.ecalVeto.getAvgLayerHit()
-    feats['stdLayerHit']        = self.ecalVeto.getStdLayerHit()
-    feats['deepestLayerHit']    = self.ecalVeto.getDeepestLayerHit() 
-    feats['ecalBackEnergy']     = self.ecalVeto.getEcalBackEnergy()
     
-    ###################################
-    # Determine event type
-    ###################################
+    ###########################################
+    # Electron and photon information
+    ###########################################
 
-    # Get e position and momentum from EcalSP
-    e_ecalHit = physTools.electronEcalSPHit(self.ecalSPHits)
-    if e_ecalHit != None:
-        e_ecalPos, e_ecalP = e_ecalHit.getPosition(), e_ecalHit.getMomentum()
+    # Get the electron's position and momentum at the ECal
+    electron_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
+    if electron_ecal_sp_hit != None:
+        electron_ecal_sp_pos, electron_ecal_sp_mom = physTools.get_position(electron_ecal_sp_hit),\
+                                                     physTools.get_momentum(electron_ecal_sp_hit)
 
-    # Photon Info from targetSP
-    e_targetHit = physTools.electronTargetSPHit(self.targetSPHits)
-    if e_targetHit != None:
-        g_targPos, g_targP = physTools.gammaTargetInfo(e_targetHit)
-    else:  # Should about never happen -> division by 0 in g_traj
-        print('no e at targ!')
-        g_targPos = g_targP = np.zeros(3)
+    # Infer the photon's position and momentum at the target
+    electron_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hit)
+    if electron_target_sp_hit != None:
+        photon_target_sp_pos, photon_target_sp_mom = physTools.infer_photon_info(electron_target_sp_hit)
+    else:
+        print('\n[ WARNING ] - No electron found at the target scoring plane!')
+        photon_target_sp_pos = photon_target_sp_mom = np.zeros(3)
 
-    # Get electron and photon trajectories
-    e_traj = g_traj = None
+    # Use linear projections to infer the electron and photon trajectories
+    electron_trajectory = photon_trajectory = None
 
-    if e_ecalHit != None:
-        e_traj = physTools.layerIntercepts(e_ecalPos, e_ecalP)
+    if electron_ecal_sp_hit != None:
+        electron_trajectory = physTools.get_projected_intercepts(electron_ecal_sp_pos,\
+                                                                 electron_ecal_sp_mom,\
+                                                                 physTools.ecal_layerZs)
 
-    if e_targetHit != None:
-        g_traj = physTools.layerIntercepts(g_targPos, g_targP)
+    if electron_target_sp_hit != None:
+        photon_trajectory = physTools.get_projected_intercepts(photon_target_sp_pos,\
+                                                               photon_target_sp_mom,\
+                                                               physTools.ecal_layerZs)
 
-    # Fiducial categories (filtered into different output trees)
-    if self.separate:
-        e_fid = g_fid = False
+    # If desired, determine which fiducial category the event belongs to
+    if self.separate_categories:
+        fiducial_electron = fiducial_photon = False
 
-        if e_traj != None:
-            for cell in cellMap:
-                if physTools.dist( cell[1:], e_traj[0] ) <= physTools.cell_radius:
-                    e_fid = True
+        if electron_trajectory != None:
+            for cell in cell_map:
+                if physTools.distance(np.array(cell[1:]), electron_trajectory[0]) <= physTools.cell_radius:
+                    fiducial_electron = True
                     break
 
-        if g_traj != None:
-            for cell in cellMap:
-                if physTools.dist( cell[1:], g_traj[0] ) <= physTools.cell_radius:
-                    g_fid = True
+        if photon_trajectory != None:
+            for cell in cell_map:
+                if physTools.distance(np.array(cell[1:]), photon_trajectory[0]) <= physTools.cell_radius:
+                    fiducial_photon = True
                     break
+
+    ##################################
+    # Pre-computed variables
+    ##################################
+
+    new_values['nReadoutHits']    = self.ecal_veto.getNReadoutHits()
+    new_values['summedDet']       = self.ecal_veto.getSummedDet()
+    new_values['summedTightIso']  = self.ecal_veto.getSummedTightIso()
+    new_values['maxCellDep']      = self.ecal_veto.getMaxCellDep()
+    new_values['showerRMS']       = self.ecal_veto.getShowerRMS()
+    new_values['xStd']            = self.ecal_veto.getXStd()
+    new_values['yStd']            = self.ecal_veto.getYStd()
+    new_values['avgLayerHit']     = self.ecal_veto.getAvgLayerHit()
+    new_values['stdLayerHit']     = self.ecal_veto.getStdLayerHit()
+    new_values['deepestLayerHit'] = self.ecal_veto.getDeepestLayerHit() 
+    new_values['ecalBackEnergy']  = self.ecal_veto.getEcalBackEnergy()
 
     ###################################
     # Compute extra BDT input variables
