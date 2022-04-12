@@ -351,15 +351,20 @@ class HitData:
 # Miscellaneous functions
 ###################################
 
-# Function to get the position of a hit as a numpy array
+# Function to get the position of a hit
 def get_position(hit):
 
-    return np.array([hit.getXPos(), hit.getYPos(), hit.getZPos()])
+    return np.array([hit.getPosition()[0], hit.getPosition()[1], hit.getPosition()[2]])
 
 # Function to get the layerZ of a hit
 def get_layerZ(hit):
 
     return ecal_layerZs[get_ecal_layer(hit)]
+
+# Function to get the momentum of a hit
+def get_momentum(hit):
+
+    return np.array([hit.getMomentum()[0], hit.getMomentum()[1], hit.getMomentum()[2]])
 
 # Function to linearly project a point along a vector to a plane parallel to the XY-plane
 def linear_projection(x, u, z):
@@ -479,13 +484,16 @@ def get_electron_target_sp_hit(target_sp_hits):
     target_sp_hit = None
     for hit in target_sp_hits:
 
-        if abs(hit.getPosition()[2] - sp_trigger_pad_down_l2_z) > 0.5*sp_thickness or\
-                hit.getMomentum()[2] <= 0 or\
-                hit.getTrackID() != 1 or\
-                hit.getPdgID() != 11:
+        position = get_position(hit)
+        momentum = get_momentum(hit)
+
+        if abs(position[2] - sp_trigger_pad_down_l2_z) > 0.5*sp_thickness or\
+               momentum[2] <= 0 or\
+               hit.getTrackID() != 1 or\
+               hit.getPdgID() != 11:
             continue
 
-        p = np.linalg.norm(np.array(hit.getMomentum()))
+        p = np.linalg.norm(momentum)
         if p > pmax:
             target_sp_hit = hit
             pmax = p
@@ -500,13 +508,16 @@ def get_electron_ecal_sp_hit(ecal_sp_hits):
     ecal_sp_hit = None
     for hit in ecal_sp_hits:
 
-        if abs(hit.getPosition()[2] - sp_ecal_front_z) > 0.5*sp_thickness or\
-                hit.getMomentum()[2] <= 0 or\
-                hit.getTrackID() != 1 or\
-                hit.getPdgID() != 11:
+        position = get_position(hit)
+        momentum = get_momentum(hit)
+
+        if abs(position[2] - sp_ecal_front_z) > 0.5*sp_thickness or\
+               momentum[2] <= 0 or\
+               hit.getTrackID() != 1 or\
+               hit.getPdgID() != 11:
             continue
 
-        p = np.linalg.norm(np.array(hit.getMomentum()))
+        p = np.linalg.norm(momentum)
         if p > pmax:
             ecal_sp_hit = hit
             pmax = p
@@ -517,8 +528,10 @@ def get_electron_ecal_sp_hit(ecal_sp_hits):
 # at the target scoring plane
 def infer_photon_info(target_sp_hit):
 
-    return target_sp_hit.getPosition(), np.array([0., 0., 4000.])\
-                                        - np.array(target_sp_hit.getMomentum())
+    position = get_position(target_sp_hit)
+    momentum = get_momentum(target_sp_hit)
+
+    return position, np.array([0., 0., 4000.]) - momentum
 
 # Function to get the photon scoring plane hit at the ECal scoring plane
 def get_photon_ecal_sp_hit(ecal_sp_hits):
@@ -527,12 +540,15 @@ def get_photon_ecal_sp_hit(ecal_sp_hits):
     ecal_sp_hit = None
     for hit in ecal_sp_hits:
 
-        if abs(hit.getPosition()[2] - sp_ecal_front_z) > 0.5*sp_thickness or\
-                hit.getMomentum()[2] <= 0 or\
-                not (hit.getPdgID() in [-22, 22]):
+        position = get_position(hit)
+        momentum = get_momentum(hit)
+
+        if abs(position[2] - sp_ecal_front_z) > 0.5*sp_thickness or\
+               momentum[2] <= 0 or\
+               not (hit.getPdgID() in [-22, 22]):
             continue
 
-        p = np.linalg.norm(np.array(hit.getMomentum()))
+        p = np.linalg.norm(momentum)
         if p > pmax:
             ecal_sp_hit = hit
             pmax = p
