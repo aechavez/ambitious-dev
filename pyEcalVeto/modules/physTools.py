@@ -383,8 +383,8 @@ def linear_projection(x, u, z):
 
     return np.array([x2, y2, z2])
 
-# Function to get the intercepts for a point projected through a collection of planes
-def get_projected_intercepts(x, u, zs):
+# Function to calculate the intercepts for a point projected through a collection of planes
+def projection_intercepts(x, u, zs):
 
     return np.array([linear_projection(x, u, z)[0:2] for z in zs])
 
@@ -524,14 +524,27 @@ def get_electron_ecal_sp_hit(ecal_sp_hits):
 
     return ecal_sp_hit
 
-# Function to infer the photonuclear photon's position and momentum
-# at the target scoring plane
-def infer_photon_info(target_sp_hit):
+# Function to get the photon scoring plane hit at the target scoring plane
+def get_photon_target_sp_hit(target_sp_hits):
 
-    position = get_position(target_sp_hit)
-    momentum = get_momentum(target_sp_hit)
+    pmax = 0
+    target_sp_hit = None
+    for hit in target_sp_hits:
 
-    return position, np.array([0., 0., 4000.]) - momentum
+        position = get_position(hit)
+        momentum = get_momentum(hit)
+
+        if abs(position[2] - sp_trigger_pad_down_l2_z) > 0.5*sp_thickness or\
+               momentum[2] <= 0 or\
+               not (hit.getPdgID() in [-22, 22]):
+            continue
+
+        p = np.linalg.norm(momentum)
+        if p > pmax:
+            target_sp_hit = hit
+            pmax = p
+
+    return target_sp_hit
 
 # Function to get the photon scoring plane hit at the ECal scoring plane
 def get_photon_ecal_sp_hit(ecal_sp_hits):
@@ -554,3 +567,12 @@ def get_photon_ecal_sp_hit(ecal_sp_hits):
             pmax = p
 
     return ecal_sp_hit
+
+# Function to infer the photonuclear photon's position and momentum
+# at the target scoring plane
+def infer_photon_information(target_sp_hit):
+
+    position = get_position(target_sp_hit)
+    momentum = get_momentum(target_sp_hit)
+
+    return position, np.array([0., 0., 4000.]) - momentum
