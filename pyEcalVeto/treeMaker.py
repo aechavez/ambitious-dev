@@ -1,5 +1,4 @@
 import os
-import math
 import ROOT as r
 import numpy as np
 from modules import physTools, mipTracking
@@ -26,16 +25,16 @@ branch_information = {
 
     # MIP tracking variables
     'straight4':                 {'dtype': int,   'default': 0 },
-    'firstNearPhLayer':          {'dtype': int,   'default': 33},
-    'nNearPhHits':               {'dtype': int,   'default': 0 },
+    'firstNearPhotonLayer':      {'dtype': int,   'default': 33},
+    'nNearPhotonHits':           {'dtype': int,   'default': 0 },
     'fullElectronTerritoryHits': {'dtype': int,   'default': 0 },
     'fullPhotonTerritoryHits':   {'dtype': int,   'default': 0 },
     'fullTerritoryRatio':        {'dtype': float, 'default': 1.},
     'electronTerritoryHits':     {'dtype': int,   'default': 0 },
     'photonTerritoryHits':       {'dtype': int,   'default': 0 },
-    'TerritoryRatio':            {'dtype': float, 'default': 1.},
-    'epSep':                     {'dtype': float, 'default': 0.},
-    'epDot':                     {'dtype': float, 'default': 0.}
+    'territoryRatio':            {'dtype': float, 'default': 1.},
+    'trajectorySeparation':      {'dtype': float, 'default': 0.},
+    'trajectoryDot':             {'dtype': float, 'default': 0.}
 
 }
 
@@ -54,34 +53,34 @@ for i in range(1, physTools.nsegments + 1):
     for j in range(1, physTools.nregions + 1):
 
         # Electron RoC variables
-        branch_information['eContEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
-        branch_information['eContNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
-        branch_information['eContXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['eContYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['eContLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
-        branch_information['eContXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['eContYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['eContLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
+        branch_information['electronContainmentEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
+        branch_information['electronContainmentNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
+        branch_information['electronContainmentXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['electronContainmentYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['electronContainmentLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
+        branch_information['electronContainmentXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['electronContainmentYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['electronContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
         # Photon RoC variables
-        branch_information['gContEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
-        branch_information['gContNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
-        branch_information['gContXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['gContYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['gContLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
-        branch_information['gContXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['gContYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['gContLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
+        branch_information['photonContainmentXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
         # Outside RoC variables
-        branch_information['oContEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
-        branch_information['oContNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
-        branch_information['oContXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['oContYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['oContLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
-        branch_information['oContXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['oContYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['oContLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
+        branch_information['outsideContainmentXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
 # Main subroutine
 def main():
@@ -96,7 +95,7 @@ def main():
     start_event = parsing_dict['start_event']
     max_events = parsing_dict['max_events']
 
-    # Build each process
+    # Initialize each process
     processes = []
     for label, group in zip(group_labels, inputs):
         processes.append(manager.TreeProcess(process_event, file_group = group, name_tag = label,\
@@ -110,10 +109,10 @@ def main():
         os.chdir(process.temporary_directory)
 
         # Add branches needed for BDT analysis
-        process.ecal_veto = process.add_branch('EcalVetoResult', 'EcalVeto_v12')
         process.target_sp_hits = process.add_branch('SimTrackerHit', 'TargetScoringPlaneHits_v12')
         process.ecal_sp_hits = process.add_branch('SimTrackerHit', 'EcalScoringPlaneHits_v12')
         process.ecal_rec_hits = process.add_branch('EcalHit', 'EcalRecHits_v12')
+        process.ecal_veto = process.add_branch('EcalVetoResult', 'EcalVeto_v12')
 
         process.separate_categories = separate_categories
 
@@ -154,57 +153,59 @@ def process_event(self):
         self.tree_models[tree_model].reset_values()
 
     # Initialize a dictionary of new values
-    # (Just grab from the first tree model, since they're identical)
-    new_values = self.tree_models[next(iter(self.tree_models))].branches
+    new_values = {branch_name: branch_information[branch_name]['default'] for branch_name in branch_information}
     
     ###########################################
     # Electron and photon information
     ###########################################
 
+    # Get the electron's position and momentum at the target
+    ele_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hits)
+    if ele_target_sp_hit != None:
+        ele_target_sp_pos = physTools.get_position(ele_target_sp_hit)
+        ele_target_sp_mom = physTools.get_momentum(ele_target_sp_hit)
+
     # Get the electron's position and momentum at the ECal
     ele_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
     if ele_ecal_sp_hit != None:
-        ele_ecal_sp_pos, ele_ecal_sp_mom = physTools.get_position(ele_ecal_sp_hit),
-                                           physTools.get_momentum(ele_ecal_sp_hit)
+        ele_ecal_sp_pos = physTools.get_position(ele_ecal_sp_hit)
+        ele_ecal_sp_mom = physTools.get_momentum(ele_ecal_sp_hit)
 
     # Infer the photon's position and momentum at the target
-    ele_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hit)
     if ele_target_sp_hit != None:
-        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_info(ele_target_sp_hit)
+        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_information(ele_target_sp_hit)
     else:
-        print('\n[ WARNING ] - No electron found at the target scoring plane!')
+        print('[ WARNING ] - No electron found at the target scoring plane!')
         pho_target_sp_pos = pho_target_sp_mom = np.zeros(3)
 
     # Use linear projections to infer the electron and photon trajectories
     ele_traj = pho_traj = None
 
     if ele_ecal_sp_hit != None:
-        ele_traj = physTools.get_projected_intercepts(ele_ecal_sp_pos, ele_ecal_sp_mom,\
-                                                      physTools.ecal_layerZs)
+        ele_traj = physTools.projection_intercepts(ele_ecal_sp_pos, ele_ecal_sp_mom, physTools.ecal_layerZs)
 
-    if electron_target_sp_hit != None:
-        pho_traj = physTools.get_projected_intercepts(pho_target_sp_pos, pho_target_sp_mom,\
-                                                      physTools.ecal_layerZs)
+    if ele_target_sp_hit != None:
+        pho_traj = physTools.projection_intercepts(pho_target_sp_pos, pho_target_sp_mom, physTools.ecal_layerZs)
 
     # If desired, determine which fiducial category the event belongs to
     if self.separate_categories:
-        fiducial_electron = fiducial_photon = False
+        fid_ele = fid_pho = False
 
         if ele_traj != None:
             for cell in cell_map:
                 if physTools.distance(np.array(cell[1:]), ele_traj[0]) <= physTools.cell_radius:
-                    fiducial_electron = True
+                    fid_ele = True
                     break
 
         if pho_traj != None:
             for cell in cell_map:
                 if physTools.distance(np.array(cell[1:]), pho_traj[0]) <= physTools.cell_radius:
-                    fiducial_photon = True
+                    fid_pho = True
                     break
 
-    ##################################
-    # Pre-computed variables
-    ##################################
+    ###########################################
+    # Assign pre-calculated variables
+    ###########################################
 
     new_values['nReadoutHits']    = self.ecal_veto.getNReadoutHits()
     new_values['summedDet']       = self.ecal_veto.getSummedDet()
@@ -218,35 +219,35 @@ def process_event(self):
     new_values['deepestLayerHit'] = self.ecal_veto.getDeepestLayerHit() 
     new_values['ecalBackEnergy']  = self.ecal_veto.getEcalBackEnergy()
 
-    ###################################
-    # Compute extra BDT input variables
-    ###################################
+    ############################################
+    # Calculate MIP tracking variables
+    ############################################
 
-    # Find epSep and epDot, and prepare electron and photon trajectory vectors
-    if e_traj != None and g_traj != None:
+    # Calculate trajectorySeparation and trajectoryDot
+    if ele_traj != None and pho_traj != None:
 
-        # Create arrays marking start and end of each trajectory
-        e_traj_ends = [np.array([e_traj[0][0], e_traj[0][1], physTools.ecal_layerZs[0]    ]),
-                       np.array([e_traj[-1][0], e_traj[-1][1], physTools.ecal_layerZs[-1] ])]
-        g_traj_ends = [np.array([g_traj[0][0], g_traj[0][1], physTools.ecal_layerZs[0]    ]),
-                       np.array([g_traj[-1][0], g_traj[-1][1], physTools.ecal_layerZs[-1] ])]
+        # Arrays marking start/endpoints of each trajectory
+        ele_traj_ends = np.array([[ele_traj[0][0], ele_traj[0][1], physTools.ecal_layerZs[0]],\
+                                  [ele_traj[-1][0], ele_traj[-1][1], physTools.ecal_layerZs[-1]]])
+        pho_traj_ends = np.array([[pho_traj[0][0], pho_traj[0][1], physTools.ecal_layerZs[0]],\
+                                  [pho_traj[-1][0], pho_traj[-1][1], physTools.ecal_layerZs[-1]]])
 
-        # Unused epDot and epSep
-        #e_norm  = physTools.unit( e_traj_ends[1] - e_traj_ends[0] )
-        #g_norm  = physTools.unit( g_traj_ends[1] - g_traj_ends[0] )
-        #feats['epSep'] = physTools.dist( e_traj_ends[0], g_traj_ends[0] )
-        #feats['epDot'] = physTools.dot(e_norm,g_norm)
+        ele_traj_vec = physTools.normalize(ele_traj_ends[1] - ele_traj_ends[0])
+        pho_traj_vec = physTools.normalize(pho_traj_ends[1] - pho_traj_ends[0])
+
+        new_values['trajectorySeparation'] = physTools.distance(ele_traj_ends[0], pho_traj_ends[0])
+        new_values['trajectoryDot'] = np.dot(ele_traj_vec, pho_traj_vec)
 
     else:
 
-        # Electron trajectory is missing so all hits in Ecal are okay to use
-        # Pick trajectories so they won'trestrict tracking, far outside the Ecal
+        # One of the trajectories is missing, so use all of the hits in the ECal for MIP tracking
+        # Take endpoints far outside the ECal so they don't restrict tracking
+        ele_traj_ends = np.array([[999., 999., 0.], [999., 999., 999.]])
+        pho_traj_ends = np.array([[1000., 1000., 0.], [1000., 1000., 1000.]])
 
-        e_traj_ends   = [np.array([999 ,999 ,0   ]), np.array([999 ,999 ,999 ]) ]
-        g_traj_ends   = [np.array([1000,1000,0   ]), np.array([1000,1000,1000]) ]
-
-        #feats['epSep'] = 10.0 + 1.0 # Don't cut on these in this case
-        #feats['epDot'] = 3.0 + 1.0
+        # Assign dummy values in this case
+        new_values['trajectorySeparation'] = -1.
+        new_values['trajectoryDot'] = 2.
 
     # Territory setup (consider missing case)
     gToe    = physTools.unit( e_traj_ends[0] - g_traj_ends[0] )
