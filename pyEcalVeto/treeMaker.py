@@ -263,9 +263,14 @@ def process_event(self):
         new_values['trajectorySeparation'] = 11.
         new_values['trajectoryDot'] = 4.
 
-    # Territory setup (consider missing case)
+    # Setup for territory variables
     pho_to_ele = physTools.normalize(ele_traj_ends[0] - pho_traj_ends[0])
     origin = 0.5*physTools.cell_width*pho_to_ele + pho_traj_ends[0]
+
+
+    #########################################
+    # Radius of containment binning
+    #########################################
 
     # Recoil momentum magnitude and angle with respect to Z-axis
     recoil_mom_mag = recoil_mom_theta = -1.
@@ -289,11 +294,15 @@ def process_event(self):
     # Use default binning for photon RoC
     pho_radii = physTools.radius68_thetalt10_plt500
 
+
+    ###########################
+    # Major ECal loop
+    ###########################
+
     # List of hits for MIP tracking
     tracking_hit_list = []
 
-    # Major ECal loop
-    for hit in self.ecalRecHits:
+    for hit in self.ecal_rec_hits:
         
         if hit.getEnergy() > 0:
 
