@@ -333,7 +333,7 @@ radius68_thetagt20 = np.array([4.0754238481177705, 4.193693485630508,  5.1420942
 
 # Array holding endpoints for each longitudinal segment
 segment_ends = np.array([0, 6, 17, 34])
-nsegments = len(segment_ends) - 1
+nsegments = segment_ends.size - 1
 
 # Number of containment regions
 nregions = 5
@@ -384,7 +384,7 @@ def linear_projection(x, u, z):
     return np.array([x2, y2, z2])
 
 # Function to calculate the intercepts for a point projected through a collection of planes
-def projection_intercepts(x, u, zs):
+def intercepts(x, u, zs):
 
     return np.array([linear_projection(x, u, z)[0:2] for z in zs])
 
@@ -401,8 +401,8 @@ def distance(x, y):
 
     return np.sqrt(np.sum((x - y)**2))
 
-# Function to calculate the distance between a point a line
-def distance_point_to_line(x, y1, y2):
+# Function to calculate the distance between a point and a line defined by two points
+def point_line_distance(x, y1, y2):
 
     norm = np.linalg.norm(y1 - y2)
     if norm == 0: return np.sqrt(np.sum((x - y1)**2))
@@ -410,7 +410,7 @@ def distance_point_to_line(x, y1, y2):
     return np.linalg.norm(np.cross(x - y1, y1 - y2))/norm
 
 # Function to calculate the distance between two lines
-def distance_line_to_line(x1, x2, y1, y2):
+def line_line_distance(x1, x2, y1, y2):
 
     cross = np.cross(x1 - x2, y1 - y2)
     norm = np.linalg.norm(cross)
@@ -476,8 +476,7 @@ def get_hcal_strip(hit):
 # Scoring plane hit information
 #########################################
 
-# Function to get the hit from the primary electron at the
-# furthest downstream target scoring plane
+# Function to get the hit from the primary electron at the furthest downstream target scoring plane
 def get_electron_target_sp_hit(target_sp_hits):
 
     pmax = 0
@@ -500,8 +499,7 @@ def get_electron_target_sp_hit(target_sp_hits):
 
     return target_sp_hit
 
-# Function to get the electron scoring plane hit
-# at the front ECal scoring plane
+# Function to get the electron scoring plane hit at the front ECal scoring plane
 def get_electron_ecal_sp_hit(ecal_sp_hits):
 
     pmax = 0
@@ -568,9 +566,8 @@ def get_photon_ecal_sp_hit(ecal_sp_hits):
 
     return ecal_sp_hit
 
-# Function to infer the photonuclear photon's position and momentum
-# at the target scoring plane
-def infer_photon_information(target_sp_hit):
+# Function to infer the photonuclear photon's position and momentum at the target scoring plane
+def infer_photon_target_sp_hit(target_sp_hit):
 
     position = get_position(target_sp_hit)
     momentum = get_momentum(target_sp_hit)
