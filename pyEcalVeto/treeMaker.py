@@ -1,7 +1,7 @@
+import numpy as np
 import os
 import ROOT as r
-import numpy as np
-from modules import physTools, mipTracking
+from modules import mipTracking, physTools
 from modules import rootManager as manager
 
 cell_map = np.loadtxt('modules/cellModule.txt')
@@ -123,6 +123,7 @@ def main():
                 'fiducial_photon': None,
                 'non_fiducial': None
             }
+
         else:
             process.tree_models = {'unsorted': None}
 
@@ -154,54 +155,66 @@ def process_event(self):
 
     # Initialize a dictionary of new values
     new_values = {branch_name: branch_information[branch_name]['default'] for branch_name in branch_information}
-    
+
+
     ###########################################
     # Electron and photon information
     ###########################################
 
     # Get the electron's position and momentum at the target
     ele_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hits)
-    if ele_target_sp_hit != None:
+
+    if not (ele_target_sp_hit is None):
         ele_target_sp_pos = physTools.get_position(ele_target_sp_hit)
         ele_target_sp_mom = physTools.get_momentum(ele_target_sp_hit)
 
+    else:
+        print('[ WARNING ] - No electron found at the target!')
+        ele_target_sp_pos = ele_target_sp_mom = np.zeros(3)
+
     # Get the electron's position and momentum at the ECal
     ele_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
-    if ele_ecal_sp_hit != None:
+
+    if not (ele_ecal_sp_hit is None):
         ele_ecal_sp_pos = physTools.get_position(ele_ecal_sp_hit)
         ele_ecal_sp_mom = physTools.get_momentum(ele_ecal_sp_hit)
 
-    # Infer the photon's position and momentum at the target
-    if ele_target_sp_hit != None:
-        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_information(ele_target_sp_hit)
     else:
-        print('[ WARNING ] - No electron found at the target scoring plane!')
+        print('[ WARNING ] - No electron found at the ECal!')
+        ele_ecal_sp_pos = ele_ecal_sp_mom = np.zeros(3)
+
+    # Infer the photon's position and momentum at the target
+    if not (ele_target_sp_hit is None):
+        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_target_sp_hit(ele_target_sp_hit)
+
+    else:
         pho_target_sp_pos = pho_target_sp_mom = np.zeros(3)
 
     # Use linear projections to infer the electron and photon trajectories
     ele_traj = pho_traj = None
 
-    if ele_ecal_sp_hit != None:
-        ele_traj = physTools.projection_intercepts(ele_ecal_sp_pos, ele_ecal_sp_mom, physTools.ecal_layerZs)
+    if not (ele_ecal_sp_hit is None):
+        ele_traj = physTools.intercepts(ele_ecal_sp_pos, ele_ecal_sp_mom, physTools.ecal_layerZs)
 
-    if ele_target_sp_hit != None:
-        pho_traj = physTools.projection_intercepts(pho_target_sp_pos, pho_target_sp_mom, physTools.ecal_layerZs)
+    if not (ele_target_sp_hit is None):
+        pho_traj = physTools.intercepts(pho_target_sp_pos, pho_target_sp_mom, physTools.ecal_layerZs)
 
     # If desired, determine which fiducial category the event belongs to
     if self.separate_categories:
         fid_ele = fid_pho = False
 
-        if ele_traj != None:
+        if not (ele_traj is None):
             for cell in cell_map:
                 if physTools.distance(np.array(cell[1:]), ele_traj[0]) <= physTools.cell_radius:
                     fid_ele = True
                     break
 
-        if pho_traj != None:
+        if not (pho_traj is None):
             for cell in cell_map:
                 if physTools.distance(np.array(cell[1:]), pho_traj[0]) <= physTools.cell_radius:
                     fid_pho = True
                     break
+
 
     ###########################################
     # Assign pre-calculated variables
@@ -219,12 +232,13 @@ def process_event(self):
     new_values['deepestLayerHit'] = self.ecal_veto.getDeepestLayerHit() 
     new_values['ecalBackEnergy']  = self.ecal_veto.getEcalBackEnergy()
 
+
     ############################################
     # Calculate MIP tracking variables
     ############################################
 
     # Calculate trajectorySeparation and trajectoryDot
-    if ele_traj != None and pho_traj != None:
+    if not ((ele_traj is None) and (pho_traj is None)):
 
         # Arrays marking start/endpoints of each trajectory
         ele_traj_ends = np.array([[ele_traj[0][0], ele_traj[0][1], physTools.ecal_layerZs[0]],\
@@ -246,28 +260,37 @@ def process_event(self):
         pho_traj_ends = np.array([[1000., 1000., 0.], [1000., 1000., 1000.]])
 
         # Assign dummy values in this case
-        new_values['trajectorySeparation'] = -1.
-        new_values['trajectoryDot'] = 2.
+        new_values['trajectorySeparation'] = 11.
+        new_values['trajectoryDot'] = 4.
 
     # Territory setup (consider missing case)
-    gToe    = physTools.unit( e_traj_ends[0] - g_traj_ends[0] )
-    origin  = g_traj_ends[0] + 0.5*8.7*gToe
+    pho_to_ele = physTools.normalize(ele_traj_ends[0] - pho_traj_ends[0])
+    origin = 0.5*physTools.cell_width*pho_to_ele + pho_traj_ends[0]
 
-    # Recoil electron momentum magnitude and angle with z-axis
-    recoilPMag  = physTools.mag(  e_ecalP )                 if e_ecalHit != None else -1.0
-    recoilTheta = physTools.angle(e_ecalP, units='radians') if recoilPMag > 0    else -1.0
+    # Recoil momentum magnitude and angle with respect to Z-axis
+    recoil_mom_mag = recoil_mom_theta = -1.
+
+    if not (ele_ecal_sp_hit is None):
+        recoil_mom_mag = np.linalg.norm(ele_ecal_sp_mom)
+        recoil_mom_theta = physTools.angle(ele_ecal_sp_mom, np.array([0., 0., 1.]), units = 'degrees')
 
     # Set electron RoC binnings
-    e_radii = physTools.radius68_thetalt10_plt500
-    if recoilTheta < 10 and recoilPMag >= 500: e_radii = physTools.radius68_thetalt10_pgt500
-    elif recoilTheta >= 10 and recoilTheta < 20: e_radii = physTools.radius68_theta10to20
-    elif recoilTheta >= 20: e_radii = physTools.radius68_thetagt20
+    ele_radii = physTools.radius68_thetalt10_plt500
 
-    # Always use default binning for photon RoC
-    g_radii = physTools.radius68_thetalt10_plt500
+    if recoil_mom_theta < 10. and recoil_mom_mag >= 500.:
+        ele_radii = physTools.radius68_thetalt10_pgt500
 
-    # Big data
-    trackingHitList = []
+    elif recoil_mom_theta >= 10. and recoil_mom_theta < 20.:
+        ele_radii = physTools.radius68_theta10to20
+
+    elif recoil_mom_theta >= 20.:
+        ele_radii = physTools.radius68_thetagt20
+
+    # Use default binning for photon RoC
+    pho_radii = physTools.radius68_thetalt10_plt500
+
+    # List of hits for MIP tracking
+    tracking_hit_list = []
 
     # Major ECal loop
     for hit in self.ecalRecHits:
