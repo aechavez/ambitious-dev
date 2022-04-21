@@ -233,11 +233,11 @@ def process_event(self):
     new_values['ecalBackEnergy']  = self.ecal_veto.getEcalBackEnergy()
 
 
-    ############################################
-    # Calculate MIP tracking variables
-    ############################################
+    ###############################
+    # Set up MIP tracking
+    ###############################
 
-    # Calculate trajectorySeparation and trajectoryDot
+    # Calculate trajectory variables
     if not ((ele_traj is None) and (pho_traj is None)):
 
         # Arrays marking start/endpoints of each trajectory
@@ -263,7 +263,7 @@ def process_event(self):
         new_values['trajectorySeparation'] = 11.
         new_values['trajectoryDot'] = 4.
 
-    # Setup for territory variables
+    # Set up for territory variables
     pho_to_ele = physTools.normalize(ele_traj_ends[0] - pho_traj_ends[0])
     origin = 0.5*physTools.cell_width*pho_to_ele + pho_traj_ends[0]
 
@@ -273,22 +273,22 @@ def process_event(self):
     #########################################
 
     # Recoil momentum magnitude and angle with respect to Z-axis
-    recoil_mom_mag = recoil_mom_theta = -1.
+    recoil_mom_mag = recoil_mom_theta = -1
 
     if not (ele_ecal_sp_hit is None):
         recoil_mom_mag = np.linalg.norm(ele_ecal_sp_mom)
-        recoil_mom_theta = physTools.angle(ele_ecal_sp_mom, np.array([0., 0., 1.]), units = 'degrees')
+        recoil_mom_theta = physTools.angle(ele_ecal_sp_mom, np.array([0, 0, 1]), units = 'degrees')
 
     # Set electron RoC binnings
     ele_radii = physTools.radius68_thetalt10_plt500
 
-    if recoil_mom_theta < 10. and recoil_mom_mag >= 500.:
+    if recoil_mom_theta < 10 and recoil_mom_mag >= 500:
         ele_radii = physTools.radius68_thetalt10_pgt500
 
-    elif recoil_mom_theta >= 10. and recoil_mom_theta < 20.:
+    elif recoil_mom_theta >= 10 and recoil_mom_theta < 20:
         ele_radii = physTools.radius68_theta10to20
 
-    elif recoil_mom_theta >= 20.:
+    elif recoil_mom_theta >= 20:
         ele_radii = physTools.radius68_thetagt20
 
     # Use default binning for photon RoC
@@ -306,28 +306,30 @@ def process_event(self):
         
         if hit.getEnergy() > 0:
 
-            layer = physTools.ecal_layer(hit)
-            xy_pair = ( hit.getXPos(), hit.getYPos() )
+            layer = physTools.get_ecal_layer(hit)
+            xy_pos = physTools.get_position(hit)[0:2]
 
-            # Territory selections
-            hitPrime = physTools.pos(hit) - origin
-            if np.dot(hitPrime, gToe) > 0: feats['fullElectronTerritoryHits'] += 1
-            else: feats['fullPhotonTerritoryHits'] += 1
+            # Distances to inferred trajectories
+            dist_ele_traj = dist_pho_traj = -1
 
-            # Distance to electron trajectory
-            if e_traj != None:
-                xy_e_traj = ( e_traj[layer][0], e_traj[layer][1] )
-                distance_e_traj = physTools.dist(xy_pair, xy_e_traj)
-            else: distance_e_traj = -1.0
+            if not (ele_traj is None):
+                xy_ele_traj = np.array([ele_traj[layer][0], ele_traj[layer][1]])
+                dist_ele_traj = physTools.distance(xy_pos, xy_ele_traj)
 
-            # Distance to photon trajectory
-            if g_traj != None:
-                xy_g_traj = ( g_traj[layer][0], g_traj[layer][1] )
-                distance_g_traj = physTools.dist(xy_pair, xy_g_traj)
-            else: distance_g_traj = -1.0
+            if not (pho_traj is None):
+                xy_pho_traj = np.array([pho_traj[layer][0], pho_traj[layer][1]])
+                dist_pho_traj = physTools.distance(xy_pos, xy_pho_traj)
+
+            # Calculate number of territory hits
+            hit_prime = physTools.get_position(hit) - origin
+            if np.dot(hit_prime, pho_to_ele) > 0:
+                new_values['fullElectronTerritoryHits'] += 1
+
+            else: 
+                new_values['fullPhotonTerritoryHits'] += 1
 
             # Decide which longitudinal segment the hit is in and add to sums
-            for i in range(1, physTools.nSegments + 1):
+            for i in range(1, physTools.nsegments + 1):
 
                 if (physTools.segLayers[i - 1] <= layer)\
                   and (layer <= physTools.segLayers[i] - 1):
