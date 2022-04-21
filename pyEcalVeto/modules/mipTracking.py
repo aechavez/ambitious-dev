@@ -71,7 +71,7 @@ def findStraightTracks(hitlist, etraj_ends, ptraj_ends,\
         # If it's exactly the min, it has to be very close to ptraj
         if len(track) == mst: 
             for hitt in track:
-                if physTools.distance_point_to_line( physTools.get_position(hitt),
+                if physTools.point_line_distance( physTools.get_position(hitt),
                         ptraj_ends[0], ptraj_ends[1] ) > physTools.cell_width - 0.5:
                     break
                 continue
@@ -79,8 +79,8 @@ def findStraightTracks(hitlist, etraj_ends, ptraj_ends,\
         # Check that the track approaches the photon's and not the electron's
         trk_s = np.array( (track[ 0].getXPos(), track[ 0].getYPos(), track[ 0].getZPos() ) )
         trk_e = np.array( (track[-1].getXPos(), track[-1].getYPos(), track[-1].getZPos() ) )
-        closest_e = physTools.distance_line_to_line( etraj_ends[0], etraj_ends[1], trk_s, trk_e )
-        closest_p = physTools.distance_line_to_line( ptraj_ends[0], ptraj_ends[1], trk_s, trk_e )
+        closest_e = physTools.line_line_distance( etraj_ends[0], etraj_ends[1], trk_s, trk_e )
+        closest_p = physTools.line_line_distance( ptraj_ends[0], ptraj_ends[1], trk_s, trk_e )
         if closest_p > physTools.cell_width and closest_e < 2*physTools.cell_width:
             continue
 
