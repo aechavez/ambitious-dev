@@ -331,12 +331,12 @@ radius68_thetagt20 = np.array([4.0754238481177705, 4.193693485630508,  5.1420942
                                120.89712563907408, 133.27021026999518, 142.99196243434795, 155.36504706526904, 165.08679922962185,
                                177.45988386054293, 187.18163602489574, 199.55472065581682, 209.2764728201696])
 
-# Array holding endpoints for each longitudinal segment
-segment_ends = np.array([0, 6, 17, 34])
-nsegments = segment_ends.size - 1
-
 # Number of containment regions
 nregions = 5
+
+# Array holding start/endpoints for each longitudinal segment
+nsegments = 3
+segment_ends = np.array([[0, 5], [6, 16], [17, 33]])
 
 # Simple class for storing hit data
 class HitData:
