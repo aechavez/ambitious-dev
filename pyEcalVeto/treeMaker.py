@@ -220,27 +220,34 @@ def process_event(self):
     # Assign pre-calculated variables
     ###########################################
 
-    new_values['nReadoutHits']    = self.ecal_veto.getNReadoutHits()
-    new_values['summedDet']       = self.ecal_veto.getSummedDet()
-    new_values['summedTightIso']  = self.ecal_veto.getSummedTightIso()
-    new_values['maxCellDep']      = self.ecal_veto.getMaxCellDep()
-    new_values['showerRMS']       = self.ecal_veto.getShowerRMS()
-    new_values['xStd']            = self.ecal_veto.getXStd()
-    new_values['yStd']            = self.ecal_veto.getYStd()
-    new_values['avgLayerHit']     = self.ecal_veto.getAvgLayerHit()
-    new_values['stdLayerHit']     = self.ecal_veto.getStdLayerHit()
+    new_values['nReadoutHits'] = self.ecal_veto.getNReadoutHits()
+    new_values['summedDet'] = self.ecal_veto.getSummedDet()
+    new_values['summedTightIso'] = self.ecal_veto.getSummedTightIso()
+    new_values['maxCellDep'] = self.ecal_veto.getMaxCellDep()
+    new_values['showerRMS'] = self.ecal_veto.getShowerRMS()
+    new_values['xStd'] = self.ecal_veto.getXStd()
+    new_values['yStd'] = self.ecal_veto.getYStd()
+    new_values['avgLayerHit'] = self.ecal_veto.getAvgLayerHit()
+    new_values['stdLayerHit'] = self.ecal_veto.getStdLayerHit()
     new_values['deepestLayerHit'] = self.ecal_veto.getDeepestLayerHit() 
-    new_values['ecalBackEnergy']  = self.ecal_veto.getEcalBackEnergy()
+    new_values['ecalBackEnergy'] = self.ecal_veto.getEcalBackEnergy()
 
 
     ###############################
     # Set up MIP tracking
     ###############################
 
-    # Calculate trajectory variables
+    # For straight tracks algorithm
+    tracking_hit_list = []
+
+    # For territory variables
+    pho_to_ele = physTools.normalize(ele_traj_ends[0] - pho_traj_ends[0])
+    origin = 0.5*physTools.cell_width*pho_to_ele + pho_traj_ends[0]
+
+    # Get endpoints of each trajectory and calculate trajectory variables
     if not ((ele_traj is None) and (pho_traj is None)):
 
-        # Arrays marking start/endpoints of each trajectory
+        # Arrays marking endpoints of each trajectory
         ele_traj_ends = np.array([[ele_traj[0][0], ele_traj[0][1], physTools.ecal_layerZs[0]],\
                                   [ele_traj[-1][0], ele_traj[-1][1], physTools.ecal_layerZs[-1]]])
         pho_traj_ends = np.array([[pho_traj[0][0], pho_traj[0][1], physTools.ecal_layerZs[0]],\
@@ -262,10 +269,6 @@ def process_event(self):
         # Assign dummy values in this case
         new_values['trajectorySeparation'] = 11.
         new_values['trajectoryDot'] = 4.
-
-    # Set up for territory variables
-    pho_to_ele = physTools.normalize(ele_traj_ends[0] - pho_traj_ends[0])
-    origin = 0.5*physTools.cell_width*pho_to_ele + pho_traj_ends[0]
 
 
     #########################################
@@ -299,9 +302,6 @@ def process_event(self):
     # Major ECal loop
     ###########################
 
-    # List of hits for MIP tracking
-    tracking_hit_list = []
-
     for hit in self.ecal_rec_hits:
         
         if hit.getEnergy() > 0:
@@ -320,133 +320,105 @@ def process_event(self):
                 xy_pho_traj = np.array([pho_traj[layer][0], pho_traj[layer][1]])
                 dist_pho_traj = physTools.distance(xy_pos, xy_pho_traj)
 
-            # Calculate number of territory hits
+            # Determine which territory the hit is in and add to sums
             hit_prime = physTools.get_position(hit) - origin
+
             if np.dot(hit_prime, pho_to_ele) > 0:
                 new_values['fullElectronTerritoryHits'] += 1
 
             else: 
                 new_values['fullPhotonTerritoryHits'] += 1
 
-            # Decide which longitudinal segment the hit is in and add to sums
+            # Determine which longitudinal segment the hit is in and add to sums
             for i in range(1, physTools.nsegments + 1):
 
-                if (physTools.segLayers[i - 1] <= layer)\
-                  and (layer <= physTools.segLayers[i] - 1):
-                    feats['energy_s{}'.format(i)] += hit.getEnergy()
-                    feats['nHits_s{}'.format(i)] += 1
-                    feats['xMean_s{}'.format(i)] += xy_pair[0]*hit.getEnergy()
-                    feats['yMean_s{}'.format(i)] += xy_pair[1]*hit.getEnergy()
-                    feats['layerMean_s{}'.format(i)] += layer*hit.getEnergy()
+                if (physTools.segment_ends[i - 1][0] <= layer) and (layer <= physTools.segment_ends[i - 1][1]):
+                    new_values['energy_s{}'.format(i)] += hit.getEnergy()
+                    new_values['nHits_s{}'.format(i)] += 1
+                    new_values['xMean_s{}'.format(i)] += xy_pos[0]*hit.getEnergy()
+                    new_values['yMean_s{}'.format(i)] += xy_pos[1]*hit.getEnergy()
+                    new_values['layerMean_s{}'.format(i)] += layer*hit.getEnergy()
 
-                    # Decide which containment region the hit is in and add to sums
-                    for j in range(1, physTools.nRegions + 1):
+                    # Determine which containment region the hit is in and add to sums
+                    for j in range(1, physTools.nregions + 1):
 
-                        if ((j - 1)*e_radii[layer] <= distance_e_traj)\
-                          and (distance_e_traj < j*e_radii[layer]):
-                            feats['eContEnergy_x{}_s{}'.format(j,i)] += hit.getEnergy()
-                            feats['eContNHits_x{}_s{}'.format(j,i)] += 1
-                            feats['eContXMean_x{}_s{}'.format(j,i)] +=\
-                                                                xy_pair[0]*hit.getEnergy()
-                            feats['eContYMean_x{}_s{}'.format(j,i)] +=\
-                                                                xy_pair[1]*hit.getEnergy()
-                            feats['eContLayerMean_x{}_s{}'.format(j,i)] +=\
-                                                                layer*hit.getEnergy()
+                        if ((j - 1)*ele_radii[layer] <= dist_ele_traj) and (dist_ele_traj < j*ele_radii[layer]):
+                            new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)] += hit.getEnergy()
+                            new_values['electronContainmentNHits_x{}_s{}'.format(j, i)] += 1
+                            new_values['electronContainmentXMean_x{}_s{}'.format(j, i)] += xy_pos[0]*hit.getEnergy()
+                            new_values['electronContainmentYMean_x{}_s{}'.format(j, i)] += xy_pos[1]*hit.getEnergy()
+                            new_values['electronContainmentLayerMean_x{}_s{}'.format(j, i)] += layer*hit.getEnergy()
 
-                        if ((j - 1)*g_radii[layer] <= distance_g_traj)\
-                          and (distance_g_traj < j*g_radii[layer]):
-                            feats['gContEnergy_x{}_s{}'.format(j,i)] += hit.getEnergy()
-                            feats['gContNHits_x{}_s{}'.format(j,i)] += 1
-                            feats['gContXMean_x{}_s{}'.format(j,i)] +=\
-                                                                xy_pair[0]*hit.getEnergy()
-                            feats['gContYMean_x{}_s{}'.format(j,i)] +=\
-                                                                xy_pair[1]*hit.getEnergy()
-                            feats['gContLayerMean_x{}_s{}'.format(j,i)] +=\
-                                                                layer*hit.getEnergy()
+                        if ((j - 1)*pho_radii[layer] <= dist_pho_traj) and (dist_pho_traj < j*pho_radii[layer]):
+                            new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)] += hit.getEnergy()
+                            new_values['photonContainmentNHits_x{}_s{}'.format(j, i)] += 1
+                            new_values['photonContainmentXMean_x{}_s{}'.format(j, i)] += xy_pos[0]*hit.getEnergy()
+                            new_values['photonContainmentYMean_x{}_s{}'.format(j, i)] += xy_pos[1]*hit.getEnergy()
+                            new_values['photonContainmentLayerMean_x{}_s{}'.format(j, i)] += layer*hit.getEnergy()
 
-                        if (distance_e_traj > j*e_radii[layer])\
-                          and (distance_g_traj > j*g_radii[layer]):
-                            feats['oContEnergy_x{}_s{}'.format(j,i)] += hit.getEnergy()
-                            feats['oContNHits_x{}_s{}'.format(j,i)] += 1
-                            feats['oContXMean_x{}_s{}'.format(j,i)] +=\
-                                                                xy_pair[0]*hit.getEnergy()
-                            feats['oContYMean_x{}_s{}'.format(j,i)] +=\
-                                                                xy_pair[1]*hit.getEnergy()
-                            feats['oContLayerMean_x{}_s{}'.format(j,i)] +=\
-                                                                layer*hit.getEnergy()
+                        if (dist_ele_traj > j*ele_radii[layer]) and (dist_pho_traj > j*pho_radii[layer]):
+                            new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)] += hit.getEnergy()
+                            new_values['outsideContainmentNHits_x{}_s{}'.format(j, i)] += 1
+                            new_values['outsideContainmentXMean_x{}_s{}'.format(j, i)] += xy_pos[0]*hit.getEnergy()
+                            new_values['outsideContainmentYMean_x{}_s{}'.format(j, i)] += xy_pos[1]*hit.getEnergy()
+                            new_values['outsideContainmentLayerMean_x{}_s{}'.format(j, i)] += layer*hit.getEnergy()
 
-            # Build MIP tracking hit list; (outside electron region or electron missing)
-            if distance_e_traj >= e_radii[layer] or distance_e_traj == -1.0:
-                trackingHitList.append(hit) 
+            # Add to MIP tracking hit list if outside electron RoC or electron missing
+            if (dist_ele_traj >= ele_radii[layer]) or (dist_ele_traj == -1):
+                tracking_hit_list.append(hit) 
 
-    # If possible, quotient out the total energy from the means
-    for i in range(1, physTools.nSegments + 1):
+    # Quotient out the total energy from the means if possible
+    for i in range(1, physTools.nsegments + 1):
 
-        if feats['energy_s{}'.format(i)] > 0:
-            feats['xMean_s{}'.format(i)] /= feats['energy_s{}'.format(i)]
-            feats['yMean_s{}'.format(i)] /= feats['energy_s{}'.format(i)]
-            feats['layerMean_s{}'.format(i)] /= feats['energy_s{}'.format(i)]
+        if new_values['energy_s{}'.format(i)] > 0:
+            new_values['xMean_s{}'.format(i)] /= new_values['energy_s{}'.format(i)]
+            new_values['yMean_s{}'.format(i)] /= new_values['energy_s{}'.format(i)]
+            new_values['layerMean_s{}'.format(i)] /= new_values['energy_s{}'.format(i)]
 
-        for j in range(1, physTools.nRegions + 1):
+        for j in range(1, physTools.nregions + 1):
 
-            if feats['eContEnergy_x{}_s{}'.format(j,i)] > 0:
-                feats['eContXMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['eContEnergy_x{}_s{}'.format(j,i)]
-                feats['eContYMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['eContEnergy_x{}_s{}'.format(j,i)]
-                feats['eContLayerMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['eContEnergy_x{}_s{}'.format(j,i)]
+            if new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)] > 0:
+                new_values['electronContainmentXMean_x{}_s{}'.format(j, i)] /= new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)]
+                new_values['electronContainmentYMean_x{}_s{}'.format(j, i)] /= new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)]
+                new_values['electronContainmentLayerMean_x{}_s{}'.format(j, i)] /= new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)]
 
-            if feats['gContEnergy_x{}_s{}'.format(j,i)] > 0:
-                feats['gContXMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['gContEnergy_x{}_s{}'.format(j,i)]
-                feats['gContYMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['gContEnergy_x{}_s{}'.format(j,i)]
-                feats['gContLayerMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['gContEnergy_x{}_s{}'.format(j,i)]
+            if new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)] > 0:
+                new_values['photonContainmentXMean_x{}_s{}'.format(j, i)] /= new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)]
+                new_values['photonContainmentYMean_x{}_s{}'.format(j, i)] /= new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)]
+                new_values['photonContainmentLayerMean_x{}_s{}'.format(j, i)] /= new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)]
 
-            if feats['oContEnergy_x{}_s{}'.format(j,i)] > 0:
-                feats['oContXMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['oContEnergy_x{}_s{}'.format(j,i)]
-                feats['oContYMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['oContEnergy_x{}_s{}'.format(j,i)]
-                feats['oContLayerMean_x{}_s{}'.format(j,i)] /=\
-                                                    feats['oContEnergy_x{}_s{}'.format(j,i)]
+            if new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)] > 0:
+                new_values['outsideContainmentXMean_x{}_s{}'.format(j, i)] /= new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)]
+                new_values['outsideContainmentYMean_x{}_s{}'.format(j, i)] /= new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)]
+                new_values['outsideContainmentLayerMean_x{}_s{}'.format(j, i)] /= new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)]
 
-    # Loop over hits again to calculate the standard deviations
-    for hit in self.ecalRecHits:
+    # Loop over hits again to calculate standard deviations
+    for hit in self.ecal_rec_hits:
 
-        layer = physTools.ecal_layer(hit)
-        xy_pair = (hit.getXPos(), hit.getYPos())
+        layer = physTools.get_ecal_layer(hit)
+        xy_pos = physTools.get_position(hit)[0:2]
 
-        # Distance to electron trajectory
-        if e_traj != None:
-            xy_e_traj = (e_traj[layer][0], e_traj[layer][1])
-            distance_e_traj = physTools.dist(xy_pair, xy_e_traj)
-        else:
-            distance_e_traj = -1.0
+        # Distances to inferred trajectories
+        dist_ele_traj = dist_pho_traj = -1
 
-        # Distance to photon trajectory
-        if g_traj != None:
-            xy_g_traj = (g_traj[layer][0], g_traj[layer][1])
-            distance_g_traj = physTools.dist(xy_pair, xy_g_traj)
-        else:
-            distance_g_traj = -1.0
+        if not (ele_traj is None):
+            xy_ele_traj = np.array([ele_traj[layer][0], ele_traj[layer][1]])
+            dist_ele_traj = physTools.distance(xy_pos, xy_ele_traj)
 
-        # Decide which longitudinal segment the hit is in and add to sums
-        for i in range(1, physTools.nSegments + 1):
+        if not (pho_traj is None):
+            xy_pho_traj = np.array([pho_traj[layer][0], pho_traj[layer][1]])
+            dist_pho_traj = physTools.distance(xy_pos, xy_pho_traj)
 
-            if (physTools.segLayers[i - 1] <= layer) and\
-                    (layer <= physTools.segLayers[i] - 1):
-                feats['xStd_s{}'.format(i)] += ((xy_pair[0] -\
-                        feats['xMean_s{}'.format(i)])**2)*hit.getEnergy()
-                feats['yStd_s{}'.format(i)] += ((xy_pair[1] -\
-                        feats['yMean_s{}'.format(i)])**2)*hit.getEnergy()
-                feats['layerStd_s{}'.format(i)] += ((layer -\
-                        feats['layerMean_s{}'.format(i)])**2)*hit.getEnergy()
+        # Determine which longitudinal segment the hit is in and add to sums
+        for i in range(1, physTools.nsegments + 1):
 
-                # Decide which containment region the hit is in and add to sums
-                for j in range(1, physTools.nRegions + 1):
+            if (physTools.segment_ends[i - 1][0] <= layer) and (layer <= physTools.segment_ends[i - 1][1]):
+                new_values['xStd_s{}'.format(i)] += ((xy_pos[0] - new_values['xMean_s{}'.format(i)])**2)*hit.getEnergy()
+                new_values['yStd_s{}'.format(i)] += ((xy_pos[1] - new_values['yMean_s{}'.format(i)])**2)*hit.getEnergy()
+                new_values['layerStd_s{}'.format(i)] += ((layer - new_values['layerMean_s{}'.format(i)])**2)*hit.getEnergy()
+
+                # Determine which containment region the hit is in and add to sums
+                for j in range(1, physTools.nregions + 1):
 
                     if ((j - 1)*e_radii[layer] <= distance_e_traj)\
                       and (distance_e_traj < j*e_radii[layer]):
