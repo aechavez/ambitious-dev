@@ -21,11 +21,11 @@ def parse():
     parser.add_argument('-i', nargs = '+', action = 'store', dest = 'input_files', default = [],
                         help = 'Space-separated list of input files')
     parser.add_argument('--input_dirs', nargs = '+', action = 'store', dest = 'input_directories', default = [],
-                        help = 'Space-separated list of input file directories')
+                        help = 'Space-separated list of input file directories for each file group')
     parser.add_argument('-g', nargs = '+', action = 'store', dest = 'group_labels', default = '',
-                        help = 'Space-separated list of labels for each group of input files')
+                        help = 'Space-separated list of labels for each file group')
     parser.add_argument('-o', '--out_dirs', nargs = '+', action = 'store', dest = 'outputs', default = [],
-                        help = 'Space-separated list of output files or output file directories')
+                        help = 'Space-separated list of output files or output file directories for each file group')
     parser.add_argument('--use_lists', action = 'store_true', dest = 'use_lists', default = False,
                         help = 'Whether to use lists under the hood. Setting to false makes code neater for one-sample runs (Default: False)')
     parser.add_argument('-s', type = int, action = 'store', dest = 'start_event', default = 0,
