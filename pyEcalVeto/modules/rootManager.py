@@ -22,41 +22,51 @@ def parse():
                         help = 'Space-separated list of input files')
     parser.add_argument('--input_dirs', nargs = '+', action = 'store', dest = 'input_directories', default = [],
                         help = 'Space-separated list of input file directories for each file group')
-    parser.add_argument('-g', nargs = '+', action = 'store', dest = 'group_labels', default = '',
+    parser.add_argument('-g', nargs = '+', action = 'store', dest = 'group_labels', default = [],
                         help = 'Space-separated list of labels for each file group')
     parser.add_argument('-o', '--out_dirs', nargs = '+', action = 'store', dest = 'outputs', default = [],
                         help = 'Space-separated list of output files or output file directories for each file group')
-    parser.add_argument('--use_lists', action = 'store_true', dest = 'use_lists', default = False,
-                        help = 'Whether to use lists under the hood. Setting to false makes code neater for one-sample runs (Default: False)')
+    parser.add_argument('--no_lists', action = 'store_true', dest = 'no_lists', default = False,
+                        help = 'Whether to use lists under the hood. Set to True for one-sample runs (Default: False)')
     parser.add_argument('-s', type = int, action = 'store', dest = 'start_event', default = 0,
                         help = 'Index of first event to process')
     parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
                         help = 'Maximum number of events to run over for each group of input files')
     args = parser.parse_args()
 
-    if not ((args.input_files != [] and args.input_directories == [])\
-            or (args.input_files == [] and args.input_directories != [])):
-        print('\n[ ERROR ] - Must provide either a list of input files or input file directories!')
+    if not ((len(args.input_files) > 0 and len(args.input_directories) == 0)\
+            or (len(args.input_files) == 0 and len(args.input_directories) > 0)):
+        print('\n[ ERROR ] - Must provide a list of input files or input file directories!')
         sys.exit(1)
 
-    if args.outputs == []:
-        print('\n[ ERROR ] - Must provide either a list of output files or output file directories!')
+    if len(args.input_files) > 0 and len(args.input_directories) == 0:
+        if len(args.input_files) != len(args.group_labels):
+            print('\n[ ERROR ] - Number of input file groups does not match number of group labels!')
+            sys.exit(1)
+    elif len(args.input_files) == 0 and len(args.input_directories) > 0:
+        if len(args.input_directories) != len(args.group_labels):
+            print('\n[ ERROR ] - Number of input file groups does not match number of group labels!')
+            sys.exit(1)
+
+    if len(args.outputs) == 0:
+        print('\n[ ERROR ] - Must provide a list of output files or output file directories!')
+        sys.exit(1)
+
+    if len(args.outputs) != len(args.group_labels):
+        print('\n[ ERROR ] - Number of output file groups does not match number of group labels!')
         sys.exit(1)
 
     # Parse inputs
-    if args.input_files != [] and args.input_directories == []:
+    if len(args.input_files) > 0 and len(args.input_directories) == 0:
         inputs = [[f] for f in args.input_files]
-        if args.use_lists == False:
-            inputs = inputs[0]
-    elif args.input_files == [] and args.input_directories != []:
+        if args.no_lists: inputs = inputs[0]
+    elif len(args.input_files) == 0 and len(args.input_directories) > 0:
         inputs = [glob.glob('{}/*.root'.format(input_dir)) for input_dir in args.input_directories]
-        if args.use_lists == False:
-            inputs = inputs[0]
+        if args.no_lists: inputs = inputs[0]
 
     # Parse outputs
     outputs = args.outputs
-    if args.use_lists == False:
-        outputs = outputs[0]
+    if args.no_lists: outputs = outputs[0]
     
     parsing_dict = {'batch_mode': args.batch_mode,
                     'separate_categories': args.separate_categories,
@@ -112,7 +122,7 @@ class TreeProcess:
 
         if not ((len(self.file_group) == 0 and not (self.tree is None))\
                 or (len(self.file_group) > 0 and self.tree is None)):
-            print('\n[ ERROR ] - Must provide either a file group or a tree!')
+            print('\n[ ERROR ] - Must provide a file group or a tree!')
             sys.exit(1)
 
         # Move to a scratch directory if providing a file group
@@ -145,7 +155,7 @@ class TreeProcess:
             os.makedirs(self.temporary_directory)
             os.chdir(self.temporary_directory)
 
-            # Copy group files to the temporary directory
+            # Copy the file group to the temporary directory
             print('\n[ INFO ] - Copying files to temporary directory')
             for f in self.file_group:
                 os.system('cp {} .'.format(f))
