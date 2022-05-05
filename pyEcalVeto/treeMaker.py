@@ -4,6 +4,7 @@ import ROOT as r
 from modules import mipTracking, physTools
 from modules import rootManager as manager
 
+
 cell_map = np.loadtxt('modules/cellModule.txt')
 r.gSystem.Load('libFramework.so')
 
@@ -35,7 +36,6 @@ branch_information = {
     'territoryRatio':            {'dtype': float, 'default': 1.},
     'trajectorySeparation':      {'dtype': float, 'default': 0.},
     'trajectoryDot':             {'dtype': float, 'default': 0.}
-
 }
 
 for i in range(1, physTools.nsegments + 1):
@@ -82,10 +82,14 @@ for i in range(1, physTools.nsegments + 1):
         branch_information['outsideContainmentYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
         branch_information['outsideContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
+
+###########################
 # Main subroutine
+###########################
+
 def main():
 
-    # Parse the arguments passed by the user
+    # Parse arguments passed by the user
     parsing_dict = manager.parse()
     batch_mode = parsing_dict['batch_mode']
     separate_categories = parsing_dict['separate_categories']
@@ -95,27 +99,27 @@ def main():
     start_event = parsing_dict['start_event']
     max_events = parsing_dict['max_events']
 
-    # Initialize each process
+    # Build a tree process for each file group
     processes = []
     for label, group in zip(group_labels, inputs):
         processes.append(manager.TreeProcess(process_event, file_group = group, name_tag = label,\
                                              start_event = start_event, max_events = max_events,\
                                              batch_mode = batch_mode))
 
-    # Run each process
+    # Loop to prepare each process and run
     for process in processes:
 
-        # Move into the appropriate temporary directory
+        # Move into appropriate temporary directory
         os.chdir(process.temporary_directory)
 
-        # Add branches needed for BDT analysis
+        # Add branches needed for analysis
         process.target_sp_hits = process.add_branch('SimTrackerHit', 'TargetScoringPlaneHits_v12')
         process.ecal_sp_hits = process.add_branch('SimTrackerHit', 'EcalScoringPlaneHits_v12')
         process.ecal_rec_hits = process.add_branch('EcalHit', 'EcalRecHits_v12')
         process.ecal_veto = process.add_branch('EcalVetoResult', 'EcalVeto_v12')
 
+        # Dictionary of tree models
         process.separate_categories = separate_categories
-
         if process.separate_categories:
             process.tree_models = {
                 'fiducial_electron_photon': None,
@@ -123,37 +127,38 @@ def main():
                 'fiducial_photon': None,
                 'non_fiducial': None
             }
+        else: process.tree_models = {'unsorted': None}
 
-        else:
-            process.tree_models = {'unsorted': None}
-
+        # Build a tree model for each fiducial category
         for tree_model in process.tree_models:
             process.tree_models[tree_model] = manager.TreeMaker('{}_{}.root'.format(group_labels[processes.index(process)], tree_model),\
                                                                 'EcalVeto', branch_information = branch_information,\
                                                                 out_directory = outputs[processes.index(process)])
 
         # Set closing functions
-        process.closing_functions = [process.tree_models[tree_model].write\
-                                     for tree_model in process.tree_models]
+        process.closing_functions = [process.tree_models[tree_model].write for tree_model in process.tree_models]
 
         # Run this process
         process.run()
 
-    # Remove the scratch directory if there is one
-    # (Being careful not to break other jobs if we are in batch mode)
+    # Remove the scratch directory
     if not batch_mode:
         manager.remove_scratch()
 
-    print('\n[ INFO ] - All processes done!')
+    print('\n[ INFO ] - All processes finished!')
 
+
+##########################################
 # Subroutine to process an event
+##########################################
+
 def process_event(self):
 
-    # Reset the branch values for each tree model
+    # Reset branch values for each tree model
     for tree_model in self.tree_models:
         self.tree_models[tree_model].reset_values()
 
-    # Initialize a dictionary of new values
+    # Dictionary of new values
     new_values = {branch_name: branch_information[branch_name]['default'] for branch_name in branch_information}
 
 
@@ -167,7 +172,6 @@ def process_event(self):
     if not (ele_target_sp_hit is None):
         ele_target_sp_pos = physTools.get_position(ele_target_sp_hit)
         ele_target_sp_mom = physTools.get_momentum(ele_target_sp_hit)
-
     else:
         print('[ WARNING ] - No electron found at the target!')
         ele_target_sp_pos = ele_target_sp_mom = np.zeros(3)
@@ -178,7 +182,6 @@ def process_event(self):
     if not (ele_ecal_sp_hit is None):
         ele_ecal_sp_pos = physTools.get_position(ele_ecal_sp_hit)
         ele_ecal_sp_mom = physTools.get_momentum(ele_ecal_sp_hit)
-
     else:
         print('[ WARNING ] - No electron found at the ECal!')
         ele_ecal_sp_pos = ele_ecal_sp_mom = np.zeros(3)
@@ -186,11 +189,10 @@ def process_event(self):
     # Infer the photon's position and momentum at the target
     if not (ele_target_sp_hit is None):
         pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_target_sp_hit(ele_target_sp_hit)
-
     else:
         pho_target_sp_pos = pho_target_sp_mom = np.zeros(3)
 
-    # Use linear projections to infer the electron and photon trajectories
+    # Use linear projections to infer the trajectories
     ele_traj = pho_traj = None
 
     if not (ele_ecal_sp_hit is None):
@@ -199,7 +201,7 @@ def process_event(self):
     if not (ele_target_sp_hit is None):
         pho_traj = physTools.intercepts(pho_target_sp_pos, pho_target_sp_mom, physTools.ecal_layerZs)
 
-    # If desired, determine which fiducial category the event belongs to
+    # Determine which fiducial category the event belongs to
     if self.separate_categories:
         fid_ele = fid_pho = False
 
@@ -234,15 +236,8 @@ def process_event(self):
 
 
     ###############################
-    # Set up MIP tracking
+    # MIP tracking set up
     ###############################
-
-    # For straight tracks algorithm
-    tracking_hit_list = []
-
-    # For territory variables
-    pho_to_ele = physTools.normalize(ele_traj_ends[0] - pho_traj_ends[0])
-    origin = 0.5*physTools.cell_width*pho_to_ele + pho_traj_ends[0]
 
     # Get endpoints of each trajectory and calculate trajectory variables
     if not ((ele_traj is None) and (pho_traj is None)):
@@ -258,7 +253,6 @@ def process_event(self):
 
         new_values['trajectorySeparation'] = physTools.distance(ele_traj_ends[0], pho_traj_ends[0])
         new_values['trajectoryDot'] = np.dot(ele_traj_vec, pho_traj_vec)
-
     else:
 
         # One of the trajectories is missing, so use all of the hits in the ECal for MIP tracking
@@ -269,6 +263,13 @@ def process_event(self):
         # Assign dummy values in this case
         new_values['trajectorySeparation'] = 11.
         new_values['trajectoryDot'] = 4.
+
+    # For straight tracks algorithm
+    tracking_hit_list = []
+
+    # For territory variables
+    pho_to_ele = physTools.normalize(ele_traj_ends[0] - pho_traj_ends[0])
+    origin = 0.5*physTools.cell_width*pho_to_ele + pho_traj_ends[0]
 
 
     #########################################
@@ -287,10 +288,8 @@ def process_event(self):
 
     if recoil_mom_theta < 10 and recoil_mom_mag >= 500:
         ele_radii = physTools.radius68_thetalt10_pgt500
-
     elif recoil_mom_theta >= 10 and recoil_mom_theta < 20:
         ele_radii = physTools.radius68_theta10to20
-
     elif recoil_mom_theta >= 20:
         ele_radii = physTools.radius68_thetagt20
 
@@ -325,7 +324,6 @@ def process_event(self):
 
             if np.dot(hit_prime, pho_to_ele) > 0:
                 new_values['fullElectronTerritoryHits'] += 1
-
             else: 
                 new_values['fullPhotonTerritoryHits'] += 1
 
@@ -420,79 +418,68 @@ def process_event(self):
                 # Determine which containment region the hit is in and add to sums
                 for j in range(1, physTools.nregions + 1):
 
-                    if ((j - 1)*e_radii[layer] <= distance_e_traj)\
-                      and (distance_e_traj < j*e_radii[layer]):
-                        feats['eContXStd_x{}_s{}'.format(j,i)] += ((xy_pair[0] -\
-                                feats['eContXMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
-                        feats['eContYStd_x{}_s{}'.format(j,i)] += ((xy_pair[1] -\
-                                feats['eContYMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
-                        feats['eContLayerStd_x{}_s{}'.format(j,i)] += ((layer -\
-                            feats['eContLayerMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
+                    if ((j - 1)*ele_radii[layer] <= dist_ele_traj) and (dist_ele_traj < j*ele_radii[layer]):
+                        new_values['electronContainmentXStd_x{}_s{}'.format(j, i)] +=\
+                        ((xy_pair[0] - new_values['electronContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        new_values['electronContainmentYStd_x{}_s{}'.format(j, i)] +=\
+                        ((xy_pair[1] - new_values['electronContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        new_values['electronContainmentLayerStd_x{}_s{}'.format(j, i)] +=\
+                        ((layer - new_values['electronContainmentLayerMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
 
-                    if ((j - 1)*g_radii[layer] <= distance_g_traj)\
-                      and (distance_g_traj < j*g_radii[layer]):
-                        feats['gContXStd_x{}_s{}'.format(j,i)] += ((xy_pair[0] -\
-                                feats['gContXMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
-                        feats['gContYStd_x{}_s{}'.format(j,i)] += ((xy_pair[1] -\
-                                feats['gContYMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
-                        feats['gContLayerStd_x{}_s{}'.format(j,i)] += ((layer -\
-                            feats['gContLayerMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
+                    if ((j - 1)*pho_radii[layer] <= dist_pho_traj) and (dist_pho_traj < j*pho_radii[layer]):
+                        new_values['photonContainmentXStd_x{}_s{}'.format(j, i)] +=\
+                        ((xy_pair[0] - new_values['photonContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        new_values['photonContainmentYStd_x{}_s{}'.format(j, i)] +=\
+                        ((xy_pair[1] - new_values['photonContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        new_values['photonContainmentLayerStd_x{}_s{}'.format(j, i)] +=\
+                        ((layer - new_values['photonContainmentLayerMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
 
-                    if (distance_e_traj > j*e_radii[layer])\
-                      and (distance_g_traj > j*g_radii[layer]):
-                        feats['oContXStd_x{}_s{}'.format(j,i)] += ((xy_pair[0] -\
-                                feats['oContXMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
-                        feats['oContYStd_x{}_s{}'.format(j,i)] += ((xy_pair[1] -\
-                                feats['oContYMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
-                        feats['oContLayerStd_x{}_s{}'.format(j,i)] += ((layer -\
-                            feats['oContLayerMean_x{}_s{}'.format(j,i)])**2)*hit.getEnergy()
+                    if (dist_ele_traj > j*ele_radii[layer]) and (dist_pho_traj > j*pho_radii[layer]):
+                        new_values['outsideContainmentXStd_x{}_s{}'.format(j, i)] +=\
+                        ((xy_pair[0] - new_values['outsideContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        new_values['outsideContainmentYStd_x{}_s{}'.format(j, i)] +=\
+                        ((xy_pair[1] - new_values['outsideContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        new_values['outsideContainmentLayerStd_x{}_s{}'.format(j, i)] +=\
+                        ((layer - new_values['outsideContainmentLayerMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
 
     # Quotient out the total energies from the standard deviations if possible and take root
-    for i in range(1, physTools.nSegments + 1):
+    for i in range(1, physTools.nsegments + 1):
 
-        if feats['energy_s{}'.format(i)] > 0:
-            feats['xStd_s{}'.format(i)] = math.sqrt(feats['xStd_s{}'.format(i)]/\
-                    feats['energy_s{}'.format(i)])
-            feats['yStd_s{}'.format(i)] = math.sqrt(feats['yStd_s{}'.format(i)]/\
-                    feats['energy_s{}'.format(i)])
-            feats['layerStd_s{}'.format(i)] = math.sqrt(feats['layerStd_s{}'.format(i)]/\
-                    feats['energy_s{}'.format(i)])
+        if new_values['energy_s{}'.format(i)] > 0:
+            new_values['xStd_s{}'.format(i)] = np.sqrt(new_values['xStd_s{}'.format(i)]/new_values['energy_s{}'.format(i)])
+            new_values['yStd_s{}'.format(i)] = np.sqrt(new_values['yStd_s{}'.format(i)]/new_values['energy_s{}'.format(i)])
+            new_values['layerStd_s{}'.format(i)] = np.sqrt(new_values['layerStd_s{}'.format(i)]/new_values['energy_s{}'.format(i)])
 
-        for j in range(1, physTools.nRegions + 1):
+        for j in range(1, physTools.nregions + 1):
 
-            if feats['eContEnergy_x{}_s{}'.format(j,i)] > 0:
-                feats['eContXStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['eContXStd_x{}_s{}'.format(j,i)]/\
-                        feats['eContEnergy_x{}_s{}'.format(j,i)])
-                feats['eContYStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['eContYStd_x{}_s{}'.format(j,i)]/\
-                        feats['eContEnergy_x{}_s{}'.format(j,i)])
-                feats['eContLayerStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['eContLayerStd_x{}_s{}'.format(j,i)]/\
-                        feats['eContEnergy_x{}_s{}'.format(j,i)])
+            if new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)] > 0:
+                new_values['electronContainmentXStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['electronContainmentXStd_x{}_s{}'.format(j, i)]/new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)])
+                new_values['electronContainmentYStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['electronContainmentYStd_x{}_s{}'.format(j, i)]/new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)])
+                new_values['electronContainmentLayerStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['electronContainmentLayerStd_x{}_s{}'.format(j, i)]/new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)])
 
-            if feats['gContEnergy_x{}_s{}'.format(j,i)] > 0:
-                feats['gContXStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['gContXStd_x{}_s{}'.format(j,i)]/\
-                        feats['gContEnergy_x{}_s{}'.format(j,i)])
-                feats['gContYStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['gContYStd_x{}_s{}'.format(j,i)]/\
-                        feats['gContEnergy_x{}_s{}'.format(j,i)])
-                feats['gContLayerStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['gContLayerStd_x{}_s{}'.format(j,i)]/\
-                        feats['gContEnergy_x{}_s{}'.format(j,i)])
+            if new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)] > 0:
+                new_values['photonContainmentXStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['photonContainmentXStd_x{}_s{}'.format(j, i)]/new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)])
+                new_values['photonContainmentYStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['photonContainmentYStd_x{}_s{}'.format(j, i)]/new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)])
+                new_values['photonContainmentLayerStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['photonContainmentLayerStd_x{}_s{}'.format(j, i)]/new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)])
 
-            if feats['oContEnergy_x{}_s{}'.format(j,i)] > 0:
-                feats['oContXStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['oContXStd_x{}_s{}'.format(j,i)]/\
-                        feats['oContEnergy_x{}_s{}'.format(j,i)])
-                feats['oContYStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['oContYStd_x{}_s{}'.format(j,i)]/\
-                        feats['oContEnergy_x{}_s{}'.format(j,i)])
-                feats['oContLayerStd_x{}_s{}'.format(j,i)] =\
-                        math.sqrt(feats['oContLayerStd_x{}_s{}'.format(j,i)]/\
-                        feats['oContEnergy_x{}_s{}'.format(j,i)])
+            if new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)] > 0:
+                new_values['outsideContainmentXStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['outsideContainmentXStd_x{}_s{}'.format(j, i)]/new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)])
+                new_values['outsideContainmentYStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['outsideContainmentYStd_x{}_s{}'.format(j, i)]/new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)])
+                new_values['outsideContainmentLayerStd_x{}_s{}'.format(j, i)] =\
+                np.sqrt(new_values['outsideContainmentLayerStd_x{}_s{}'.format(j, i)]/new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)])
 
+
+    ########################
+    # MIP tracking
+    ########################
 
     # Find the first layer of the ECal where a hit near the projected photon trajectory
     # AND the total number of hits around the photon trajectory
