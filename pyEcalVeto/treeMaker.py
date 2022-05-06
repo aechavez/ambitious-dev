@@ -142,8 +142,7 @@ def main():
         process.run()
 
     # Remove the scratch directory
-    if not batch_mode:
-        manager.remove_scratch()
+    if not batch_mode: manager.remove_scratch()
 
     print('\n[ INFO ] - All processes finished!')
 
@@ -286,12 +285,9 @@ def process_event(self):
     # Set electron RoC binnings
     ele_radii = physTools.radius68_thetalt10_plt500
 
-    if recoil_mom_theta < 10 and recoil_mom_mag >= 500:
-        ele_radii = physTools.radius68_thetalt10_pgt500
-    elif recoil_mom_theta >= 10 and recoil_mom_theta < 20:
-        ele_radii = physTools.radius68_theta10to20
-    elif recoil_mom_theta >= 20:
-        ele_radii = physTools.radius68_thetagt20
+    if recoil_mom_theta < 10 and recoil_mom_mag >= 500: ele_radii = physTools.radius68_thetalt10_pgt500
+    elif recoil_mom_theta >= 10 and recoil_mom_theta < 20: ele_radii = physTools.radius68_theta10to20
+    elif recoil_mom_theta >= 20: ele_radii = physTools.radius68_thetagt20
 
     # Use default binning for photon RoC
     pho_radii = physTools.radius68_thetalt10_plt500
@@ -319,18 +315,16 @@ def process_event(self):
                 xy_pho_traj = np.array([pho_traj[layer][0], pho_traj[layer][1]])
                 dist_pho_traj = physTools.distance(xy_pos, xy_pho_traj)
 
-            # Determine which territory the hit is in and add to sums
+            # Determine which full territory the hit is in and add to sums
             hit_prime = physTools.get_position(hit) - origin
 
-            if np.dot(hit_prime, pho_to_ele) > 0:
-                new_values['fullElectronTerritoryHits'] += 1
-            else: 
-                new_values['fullPhotonTerritoryHits'] += 1
+            if np.dot(hit_prime, pho_to_ele) > 0: new_values['fullElectronTerritoryHits'] += 1
+            else:  new_values['fullPhotonTerritoryHits'] += 1
 
             # Determine which longitudinal segment the hit is in and add to sums
             for i in range(1, physTools.nsegments + 1):
 
-                if (physTools.segment_ends[i - 1][0] <= layer) and (layer <= physTools.segment_ends[i - 1][1]):
+                if physTools.segment_ends[i - 1][0] <= layer and layer <= physTools.segment_ends[i - 1][1]:
                     new_values['energy_s{}'.format(i)] += hit.getEnergy()
                     new_values['nHits_s{}'.format(i)] += 1
                     new_values['xMean_s{}'.format(i)] += xy_pos[0]*hit.getEnergy()
@@ -340,29 +334,29 @@ def process_event(self):
                     # Determine which containment region the hit is in and add to sums
                     for j in range(1, physTools.nregions + 1):
 
-                        if ((j - 1)*ele_radii[layer] <= dist_ele_traj) and (dist_ele_traj < j*ele_radii[layer]):
+                        if (j - 1)*ele_radii[layer] <= dist_ele_traj and dist_ele_traj < j*ele_radii[layer]:
                             new_values['electronContainmentEnergy_x{}_s{}'.format(j, i)] += hit.getEnergy()
                             new_values['electronContainmentNHits_x{}_s{}'.format(j, i)] += 1
                             new_values['electronContainmentXMean_x{}_s{}'.format(j, i)] += xy_pos[0]*hit.getEnergy()
                             new_values['electronContainmentYMean_x{}_s{}'.format(j, i)] += xy_pos[1]*hit.getEnergy()
                             new_values['electronContainmentLayerMean_x{}_s{}'.format(j, i)] += layer*hit.getEnergy()
 
-                        if ((j - 1)*pho_radii[layer] <= dist_pho_traj) and (dist_pho_traj < j*pho_radii[layer]):
+                        if (j - 1)*pho_radii[layer] <= dist_pho_traj and dist_pho_traj < j*pho_radii[layer]:
                             new_values['photonContainmentEnergy_x{}_s{}'.format(j, i)] += hit.getEnergy()
                             new_values['photonContainmentNHits_x{}_s{}'.format(j, i)] += 1
                             new_values['photonContainmentXMean_x{}_s{}'.format(j, i)] += xy_pos[0]*hit.getEnergy()
                             new_values['photonContainmentYMean_x{}_s{}'.format(j, i)] += xy_pos[1]*hit.getEnergy()
                             new_values['photonContainmentLayerMean_x{}_s{}'.format(j, i)] += layer*hit.getEnergy()
 
-                        if (dist_ele_traj > j*ele_radii[layer]) and (dist_pho_traj > j*pho_radii[layer]):
+                        if dist_ele_traj > j*ele_radii[layer] and dist_pho_traj > j*pho_radii[layer]:
                             new_values['outsideContainmentEnergy_x{}_s{}'.format(j, i)] += hit.getEnergy()
                             new_values['outsideContainmentNHits_x{}_s{}'.format(j, i)] += 1
                             new_values['outsideContainmentXMean_x{}_s{}'.format(j, i)] += xy_pos[0]*hit.getEnergy()
                             new_values['outsideContainmentYMean_x{}_s{}'.format(j, i)] += xy_pos[1]*hit.getEnergy()
                             new_values['outsideContainmentLayerMean_x{}_s{}'.format(j, i)] += layer*hit.getEnergy()
 
-            # Add to MIP tracking hit list if outside electron RoC or electron missing
-            if (dist_ele_traj >= ele_radii[layer]) or (dist_ele_traj == -1):
+            # Add to MIP tracking hit list if outside electron RoC or electron trajectory is missing
+            if dist_ele_traj >= ele_radii[layer] or dist_ele_traj == -1:
                 tracking_hit_list.append(hit) 
 
     # Quotient out the total energy from the means if possible
@@ -410,7 +404,7 @@ def process_event(self):
         # Determine which longitudinal segment the hit is in and add to sums
         for i in range(1, physTools.nsegments + 1):
 
-            if (physTools.segment_ends[i - 1][0] <= layer) and (layer <= physTools.segment_ends[i - 1][1]):
+            if physTools.segment_ends[i - 1][0] <= layer and layer <= physTools.segment_ends[i - 1][1]:
                 new_values['xStd_s{}'.format(i)] += ((xy_pos[0] - new_values['xMean_s{}'.format(i)])**2)*hit.getEnergy()
                 new_values['yStd_s{}'.format(i)] += ((xy_pos[1] - new_values['yMean_s{}'.format(i)])**2)*hit.getEnergy()
                 new_values['layerStd_s{}'.format(i)] += ((layer - new_values['layerMean_s{}'.format(i)])**2)*hit.getEnergy()
@@ -418,7 +412,7 @@ def process_event(self):
                 # Determine which containment region the hit is in and add to sums
                 for j in range(1, physTools.nregions + 1):
 
-                    if ((j - 1)*ele_radii[layer] <= dist_ele_traj) and (dist_ele_traj < j*ele_radii[layer]):
+                    if (j - 1)*ele_radii[layer] <= dist_ele_traj and dist_ele_traj < j*ele_radii[layer]:
                         new_values['electronContainmentXStd_x{}_s{}'.format(j, i)] +=\
                         ((xy_pair[0] - new_values['electronContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['electronContainmentYStd_x{}_s{}'.format(j, i)] +=\
@@ -426,7 +420,7 @@ def process_event(self):
                         new_values['electronContainmentLayerStd_x{}_s{}'.format(j, i)] +=\
                         ((layer - new_values['electronContainmentLayerMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
 
-                    if ((j - 1)*pho_radii[layer] <= dist_pho_traj) and (dist_pho_traj < j*pho_radii[layer]):
+                    if (j - 1)*pho_radii[layer] <= dist_pho_traj and dist_pho_traj < j*pho_radii[layer]:
                         new_values['photonContainmentXStd_x{}_s{}'.format(j, i)] +=\
                         ((xy_pair[0] - new_values['photonContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['photonContainmentYStd_x{}_s{}'.format(j, i)] +=\
@@ -434,7 +428,7 @@ def process_event(self):
                         new_values['photonContainmentLayerStd_x{}_s{}'.format(j, i)] +=\
                         ((layer - new_values['photonContainmentLayerMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
 
-                    if (dist_ele_traj > j*ele_radii[layer]) and (dist_pho_traj > j*pho_radii[layer]):
+                    if dist_ele_traj > j*ele_radii[layer] and dist_pho_traj > j*pho_radii[layer]:
                         new_values['outsideContainmentXStd_x{}_s{}'.format(j, i)] +=\
                         ((xy_pair[0] - new_values['outsideContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['outsideContainmentYStd_x{}_s{}'.format(j, i)] +=\
@@ -481,47 +475,44 @@ def process_event(self):
     # MIP tracking
     ########################
 
-    # Find the first layer of the ECal where a hit near the projected photon trajectory
-    # AND the total number of hits around the photon trajectory
-    if g_traj != None: # If no photon trajectory, leave this at the default
+    # Calculate near photon variables
+    if not (pho_traj is None):
+        new_values['firstNearPhotonLayer'], new_values['nNearPhotonHits'] = mipTracking.nearPhotonInfo(tracking_hit_list, pho_traj)
+    else: new_values['nNearPhotonHits'] = new_values['nReadoutHits']
 
-        # First currently unusued; pending further study; performance drop from  v9 and v12
-        #print(trackingHitList, g_traj)
-        feats['firstNearPhLayer'], feats['nNearPhHits'] = mipTracking.nearPhotonInfo(
-                                                            trackingHitList, g_traj )
-    else: feats['nNearPhHits'] = feats['nReadoutHits']
-
-
-    # Territories limited to trackingHitList
-    if e_traj != None:
-        for hit in trackingHitList:
-            hitPrime = physTools.pos(hit) - origin
-            if np.dot(hitPrime, gToe) > 0: feats['electronTerritoryHits'] += 1
-            else: feats['photonTerritoryHits'] += 1
+    # Determine which territory the hit is in and add to sums
+    if not (ele_traj is None):
+        for hit in tracking_hit_list:
+            hit_prime = physTools.get_position(hit) - origin
+            if np.dot(hit_prime, pho_to_ele) > 0: new_values['electronTerritoryHits'] += 1
+            else: new_values['photonTerritoryHits'] += 1
     else:
-        feats['photonTerritoryHits'] = feats['nReadoutHits']
-        feats['TerritoryRatio'] = 10
-        feats['fullTerritoryRatio'] = 10
-    if feats['electronTerritoryHits'] != 0:
-        feats['TerritoryRatio'] = feats['photonTerritoryHits']/feats['electronTerritoryHits']
-    if feats['fullElectronTerritoryHits'] != 0:
-        feats['fullTerritoryRatio'] = feats['fullPhotonTerritoryHits']/\
-                                            feats['fullElectronTerritoryHits']
+        new_values['photonTerritoryHits'] = new_values['nReadoutHits']
+        new_values['territoryRatio'] = 10
+        new_values['fullTerritoryRatio'] = 10
 
+    if new_values['electronTerritoryHits'] != 0:
+        new_values['territoryRatio'] = new_values['photonTerritoryHits']/new_values['electronTerritoryHits']
+    if new_values['fullElectronTerritoryHits'] != 0:
+        new_values['fullTerritoryRatio'] = new_values['fullPhotonTerritoryHits']/new_values['fullElectronTerritoryHits']
 
-    # Find MIP tracks
-    feats['straight4'], trackingHitList = mipTracking.findStraightTracks(
-                                trackingHitList, e_traj_ends, g_traj_ends,
-                                mst = 4, returnHitList = True)
+    # Find MIP tracks with straight4 algorithm
+    new_values['straight4'], tracking_hit_list = mipTracking.findStraightTracks(tracking_hit_list, ele_traj_ends,\
+                                                                                pho_traj_ends, mst = 4, returnHitList = True)
 
-    # Fill the tree (according to fiducial category) with values for this event
+    # Fill the branches of each tree model with new values
     if not self.separate:
-        self.tfMakers['unsorted'].fillEvent(feats)
+        self.tree_models['unsorted'].fill(new_values)
     else:
-        if e_fid and g_fid: self.tfMakers['egin'].fillEvent(feats)
-        elif e_fid and not g_fid: self.tfMakers['ein'].fillEvent(feats)
-        elif not e_fid and g_fid: self.tfMakers['gin'].fillEvent(feats)
-        else: self.tfMakers['none'].fillEvent(feats)
+        if fid_ele and fid_pho: self.tree_models['fiducial_electron_photon'].fill(new_values)
+        elif fid_ele and not fid_pho: self.tree_models['fiducial_electron'].fill(new_values)
+        elif not fid_ele and fid_pho: self.tree_models['fiducial_photon'].fill(new_values)
+        else: self.tree_models['non_fiducial'].fill(new_values)
 
-if __name__ == "__main__":
+
+###############
+# RUN
+###############
+
+if __name__ == '__main__':
     main()
