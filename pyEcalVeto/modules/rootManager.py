@@ -26,8 +26,6 @@ def parse():
                         help = 'Space-separated list of labels for each file group')
     parser.add_argument('-o', '--out_dirs', nargs = '+', action = 'store', dest = 'outputs', default = [],
                         help = 'Space-separated list of output files or output file directories for each file group')
-    parser.add_argument('--no_lists', action = 'store_true', dest = 'no_lists', default = False,
-                        help = 'Whether to use lists under the hood. Set to True for one-sample runs (Default: False)')
     parser.add_argument('-s', type = int, action = 'store', dest = 'start_event', default = 0,
                         help = 'Index of first event to process')
     parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
@@ -59,14 +57,11 @@ def parse():
     # Parse inputs
     if len(args.input_files) > 0 and len(args.input_directories) == 0:
         inputs = [[f] for f in args.input_files]
-        if args.no_lists: inputs = inputs[0]
     elif len(args.input_files) == 0 and len(args.input_directories) > 0:
         inputs = [glob.glob('{}/*.root'.format(input_dir)) for input_dir in args.input_directories]
-        if args.no_lists: inputs = inputs[0]
 
     # Parse outputs
     outputs = args.outputs
-    if args.no_lists: outputs = outputs[0]
     
     parsing_dict = {'batch_mode': args.batch_mode,
                     'separate_categories': args.separate_categories,
