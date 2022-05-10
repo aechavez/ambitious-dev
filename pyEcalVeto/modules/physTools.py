@@ -134,7 +134,7 @@ layer_C_Thickness = Wthick_C_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
 # Layer D thickness is 32.1mm
 layer_D_Thickness = Wthick_D_dz + FrontTolerance + PCB_dz + PCB_Motherboard_Gap\
                     + PCB_dz + CFMix_dz + Si_dz + CFMixThick_dz + W_D_dz + C_dz\
-                    + CoolingAirGap + C_dz + W_D_dz + CFMixThick_dz + Si_dz
+                    + CoolingAirGap + C_dz + W_D_dz + CFMixThick_dz + Si_dz\
                     + CFMix_dz + PCB_dz + PCB_Motherboard_Gap + PCB_dz\
                     + BackTolerance
 
