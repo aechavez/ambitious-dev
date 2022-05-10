@@ -414,25 +414,25 @@ def process_event(self):
 
                     if (j - 1)*ele_radii[layer] <= dist_ele_traj and dist_ele_traj < j*ele_radii[layer]:
                         new_values['electronContainmentXStd_x{}_s{}'.format(j, i)] +=\
-                        ((xy_pair[0] - new_values['electronContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        ((xy_pos[0] - new_values['electronContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['electronContainmentYStd_x{}_s{}'.format(j, i)] +=\
-                        ((xy_pair[1] - new_values['electronContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        ((xy_pos[1] - new_values['electronContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['electronContainmentLayerStd_x{}_s{}'.format(j, i)] +=\
                         ((layer - new_values['electronContainmentLayerMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
 
                     if (j - 1)*pho_radii[layer] <= dist_pho_traj and dist_pho_traj < j*pho_radii[layer]:
                         new_values['photonContainmentXStd_x{}_s{}'.format(j, i)] +=\
-                        ((xy_pair[0] - new_values['photonContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        ((xy_pos[0] - new_values['photonContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['photonContainmentYStd_x{}_s{}'.format(j, i)] +=\
-                        ((xy_pair[1] - new_values['photonContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        ((xy_pos[1] - new_values['photonContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['photonContainmentLayerStd_x{}_s{}'.format(j, i)] +=\
                         ((layer - new_values['photonContainmentLayerMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
 
                     if dist_ele_traj > j*ele_radii[layer] and dist_pho_traj > j*pho_radii[layer]:
                         new_values['outsideContainmentXStd_x{}_s{}'.format(j, i)] +=\
-                        ((xy_pair[0] - new_values['outsideContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        ((xy_pos[0] - new_values['outsideContainmentXMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['outsideContainmentYStd_x{}_s{}'.format(j, i)] +=\
-                        ((xy_pair[1] - new_values['outsideContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
+                        ((xy_pos[1] - new_values['outsideContainmentYMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
                         new_values['outsideContainmentLayerStd_x{}_s{}'.format(j, i)] +=\
                         ((layer - new_values['outsideContainmentLayerMean_x{}_s{}'.format(j, i)])**2)*hit.getEnergy()
 
