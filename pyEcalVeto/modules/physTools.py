@@ -354,9 +354,13 @@ class HitData:
 # Function to get the position of a hit
 def get_position(hit):
 
-    return np.array([hit.getPosition()[0], hit.getPosition()[1], hit.getPosition()[2]])
+    # Assume that the hit is a CalorimeterHit
+    try: return np.array([hit.getXPos(), hit.getYPos(), hit.getZPos()])
 
-# Function to get the layerZ of a hit
+    # Otherwise it's probably a SimTrackerHit
+    except AttributeError: return np.array([hit.getPosition()[0], hit.getPosition()[1], hit.getPosition()[2]])
+
+# Function to get the layerZ of a ECalHit
 def get_layerZ(hit):
 
     return ecal_layerZs[get_ecal_layer(hit)]
@@ -441,32 +445,32 @@ def angle(u, v, units = 'radians'):
 # Hit ID information
 ##############################
 
-# Function to get the layer ID from a ECal hit
+# Function to get the layer ID of a ECalHit
 def get_ecal_layer(hit):
 
     return (hit.getID() >> ecal_LAYER_SHIFT) & ecal_LAYER_MASK
 
-# Function to get the module ID from a ECal hit
+# Function to get the module ID of a ECalHit
 def get_ecal_module(hit):
 
     return (hit.getID() >> ecal_MODULE_SHIFT) & ecal_MODULE_MASK
 
-# Function to get the cell ID from a ECal hit
+# Function to get the cell ID of a ECalHit
 def get_ecal_cell(hit):
 
     return (hit.getID() >> ecal_CELL_SHIFT) & ecal_CELL_MASK
 
-# Function to get the section ID from a HCal hit
+# Function to get the section ID of a HCalHit
 def get_hcal_section(hit):
 
     return (hit.getID() >> hcal_SECTION_SHIFT) & hcal_SECTION_MASK
 
-# Function to get the layer ID from a HCal hit
+# Function to get the layer ID of a HCalHit
 def get_hcal_layer(hit):
 
     return (hit.getID() >> hcal_LAYER_SHIFT) & hcal_LAYER_MASK
 
-# Function to get the strip ID from a HCal hit
+# Function to get the strip ID of a HCalHit
 def get_hcal_strip(hit):
 
     return (hit.getID() >> hcal_STRIP_SHIFT) & hcal_STRIP_MASK
@@ -476,7 +480,7 @@ def get_hcal_strip(hit):
 # Scoring plane hit information
 #########################################
 
-# Function to get the hit from the primary electron at the furthest downstream target scoring plane
+# Function to get the SimTrackerHit from the primary electron at the furthest downstream target scoring plane
 def get_electron_target_sp_hit(target_sp_hits):
 
     pmax = 0
