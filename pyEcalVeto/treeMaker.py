@@ -501,7 +501,7 @@ def process_event(self):
                                                                                 pho_traj_ends, mst = 4, returnHitList = True)
 
     # Fill the branches of each tree model with new values
-    if not self.separate:
+    if not self.separate_categories:
         self.tree_models['unsorted'].fill(new_values)
     else:
         if fid_ele and fid_pho: self.tree_models['fiducial_electron_photon'].fill(new_values)
