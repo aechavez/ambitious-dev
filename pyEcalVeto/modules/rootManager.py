@@ -21,15 +21,15 @@ def parse():
     parser.add_argument('-i', nargs = '+', action = 'store', dest = 'input_files', default = [],
                         help = 'Space-separated list of input files')
     parser.add_argument('--input_dirs', nargs = '+', action = 'store', dest = 'input_directories', default = [],
-                        help = 'Space-separated list of input file directories for each file group')
+                        help = 'Space-separated list of input file directories')
     parser.add_argument('-g', nargs = '+', action = 'store', dest = 'group_labels', default = [],
                         help = 'Space-separated list of labels for each file group')
     parser.add_argument('-o', '--out_dirs', nargs = '+', action = 'store', dest = 'outputs', default = [],
-                        help = 'Space-separated list of output files or output file directories for each file group')
+                        help = 'Space-separated list of output files or output file directories')
     parser.add_argument('-s', type = int, action = 'store', dest = 'start_event', default = 0,
                         help = 'Index of first event to process')
     parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
-                        help = 'Maximum number of events to run over for each group of input files')
+                        help = 'Maximum number of events to run over for each file group')
     args = parser.parse_args()
 
     if not ((len(args.input_files) > 0 and len(args.input_directories) == 0)\
