@@ -141,12 +141,8 @@ class TreeProcess:
                     check = False 
 
             # Create and move to the temporary directory
-            if self.batch_mode:
-                self.temporary_directory = '{}/{}'.format(scratch_dir, os.environ['LSB_JOBID'])
-            else:
-                self.temporary_directory = '{}/tmp_{}'.format(scratch_dir, num)
-            if not os.path.exists(self.temporary_directory):
-                print('\n[ INFO ] - Creating temporary directory: {}'.format(self.temporary_directory))
+            self.temporary_directory = '{}/tmp_{}'.format(scratch_dir, num)
+            print('\n[ INFO ] - Creating temporary directory: {}'.format(self.temporary_directory))
             os.makedirs(self.temporary_directory)
             os.chdir(self.temporary_directory)
 
@@ -184,6 +180,9 @@ class TreeProcess:
 
         print('\n[ INFO ] - Running tree process with name tag: {}'.format(self.name_tag))
 
+        # Move to the temporary directory
+        os.chdir(self.temporary_directory)
+
         # Reset some attributes if desired
         if start_event != self.start_event: self.start_event = start_event
         if max_events != self.max_events: self.max_events = max_events
@@ -213,10 +212,10 @@ class TreeProcess:
             for fnc in self.closing_functions:
                 fnc()
 
-        # Move back to main directory
-        os.chdir(self.cwd)
+        # Move back to the main directory
+        os.chdir(self.main_directory)
 
-        # Remove temporary directory if created
+        # Remove the temporary directory
         if self.use_scratch:
             print('\n[ INFO ] - Removing temporary directory: {}'.format(self.temporary_directory))
             os.system('rm -rf {}'.format(self.temporary_directory))
