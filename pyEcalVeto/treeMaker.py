@@ -5,10 +5,11 @@ from modules import mipTracking, physTools
 from modules import rootManager as manager
 
 
+# Load dependencies
 cell_map = np.loadtxt('modules/cellModule.txt')
 r.gSystem.Load('libFramework.so')
 
-# Branch information to build tree models
+# Branch information for tree models
 branch_information = {
 
     # Fernand variables
@@ -109,7 +110,7 @@ def main():
     # Loop to prepare each process and run
     for process in processes:
 
-        # Move into appropriate temporary directory
+        # Move to the temporary directory for this process
         os.chdir(process.temporary_directory)
 
         # Add branches needed for analysis
@@ -118,7 +119,7 @@ def main():
         process.ecal_rec_hits = process.add_branch('EcalHit', 'EcalRecHits_v12')
         process.ecal_veto = process.add_branch('EcalVetoResult', 'EcalVeto_v12')
 
-        # Dictionary of tree models
+        # Dictionary of categories for tree models
         process.separate_categories = separate_categories
         if process.separate_categories:
             process.tree_models = {
@@ -129,7 +130,7 @@ def main():
             }
         else: process.tree_models = {'unsorted': None}
 
-        # Build a tree model for each fiducial category
+        # Build a tree model for each category
         for tree_model in process.tree_models:
             process.tree_models[tree_model] = manager.TreeMaker('{}_{}.root'.format(group_labels[processes.index(process)], tree_model),\
                                                                 'EcalVeto', branch_information = branch_information,\
@@ -141,7 +142,7 @@ def main():
         # Run this process
         process.run()
 
-    # Remove the scratch directory
+    # Remove the scratch directory (Being careful not to break other jobs)
     if not batch_mode: manager.remove_scratch()
 
     print('\n[ INFO ] - All processes finished!')
@@ -165,14 +166,14 @@ def process_event(self):
     # Electron and photon information
     ###########################################
 
-    # Get the electron's position and momentum at the target
+    # Get the electron position and momentum at the target
     ele_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hits)
 
     if not (ele_target_sp_hit is None):
         ele_target_sp_pos = physTools.get_position(ele_target_sp_hit)
         ele_target_sp_mom = physTools.get_momentum(ele_target_sp_hit)
     else:
-        print('[ WARNING ] - No electron found at the target!')
+        print('[ WARNING ] - No electron found at target scoring plane!')
         ele_target_sp_pos = ele_target_sp_mom = np.zeros(3)
 
     # Get the electron's position and momentum at the ECal
@@ -182,7 +183,7 @@ def process_event(self):
         ele_ecal_sp_pos = physTools.get_position(ele_ecal_sp_hit)
         ele_ecal_sp_mom = physTools.get_momentum(ele_ecal_sp_hit)
     else:
-        print('[ WARNING ] - No electron found at the ECal!')
+        print('[ WARNING ] - No electron found at ECal scoring plane!')
         ele_ecal_sp_pos = ele_ecal_sp_mom = np.zeros(3)
 
     # Infer the photon's position and momentum at the target
@@ -195,10 +196,10 @@ def process_event(self):
     ele_traj = pho_traj = None
 
     if not (ele_ecal_sp_hit is None):
-        ele_traj = physTools.intercepts(ele_ecal_sp_pos, ele_ecal_sp_mom, physTools.ecal_layerZs)
+        ele_traj = physTools.get_intercepts(ele_ecal_sp_pos, ele_ecal_sp_mom, physTools.ecal_layerZs)
 
     if not (ele_target_sp_hit is None):
-        pho_traj = physTools.intercepts(pho_target_sp_pos, pho_target_sp_mom, physTools.ecal_layerZs)
+        pho_traj = physTools.get_intercepts(pho_target_sp_pos, pho_target_sp_mom, physTools.ecal_layerZs)
 
     # Determine which fiducial category the event belongs to
     if self.separate_categories:
@@ -239,7 +240,7 @@ def process_event(self):
     ###############################
 
     # Get endpoints of each trajectory and calculate trajectory variables
-    if not ((ele_traj is None) and (pho_traj is None)):
+    if not ((ele_traj is None) or (pho_traj is None)):
 
         # Arrays marking endpoints of each trajectory
         ele_traj_ends = np.array([[ele_traj[0][0], ele_traj[0][1], physTools.ecal_layerZs[0]],\
