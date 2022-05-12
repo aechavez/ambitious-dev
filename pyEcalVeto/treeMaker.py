@@ -176,7 +176,7 @@ def process_event(self):
         print('[ WARNING ] - No electron found at target scoring plane!')
         ele_target_sp_pos = ele_target_sp_mom = np.zeros(3)
 
-    # Get the electron's position and momentum at the ECal
+    # Get the electron position and momentum at the ECal
     ele_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
 
     if not (ele_ecal_sp_hit is None):
@@ -186,7 +186,7 @@ def process_event(self):
         print('[ WARNING ] - No electron found at ECal scoring plane!')
         ele_ecal_sp_pos = ele_ecal_sp_mom = np.zeros(3)
 
-    # Infer the photon's position and momentum at the target
+    # Infer the photon position and momentum at the target
     if not (ele_target_sp_hit is None):
         pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_target_sp_hit(ele_target_sp_hit)
     else:
