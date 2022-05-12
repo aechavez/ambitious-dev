@@ -354,11 +354,9 @@ class HitData:
 # Function to get the position of a hit
 def get_position(hit):
 
-    # Assume that the hit is a CalorimeterHit
-    try: return np.array([hit.getXPos(), hit.getYPos(), hit.getZPos()])
-
-    # Otherwise it's probably a SimTrackerHit
-    except AttributeError: return np.array([hit.getPosition()[0], hit.getPosition()[1], hit.getPosition()[2]])
+    # Two sets of method names for different hit types
+    try: return np.array([hit.getPosition()[0], hit.getPosition()[1], hit.getPosition()[2]])
+    except AttributeError: return np.array([hit.getXPos(), hit.getYPos(), hit.getZPos()])
 
 # Function to get the layerZ of a ECalHit
 def get_layerZ(hit):
@@ -387,8 +385,8 @@ def linear_projection(x, u, z):
 
     return np.array([x2, y2, z2])
 
-# Function to calculate the intercepts for a point projected through a collection of planes
-def intercepts(x, u, zs):
+# Function to get the XY-intercepts of a point projected through a collection of planes
+def get_intercepts(x, u, zs):
 
     return np.array([linear_projection(x, u, z)[0:2] for z in zs])
 
@@ -480,7 +478,7 @@ def get_hcal_strip(hit):
 # Scoring plane hit information
 #########################################
 
-# Function to get the SimTrackerHit from the primary electron at the furthest downstream target scoring plane
+# Function to get the hit from the primary electron at the furthest downstream target scoring plane
 def get_electron_target_sp_hit(target_sp_hits):
 
     pmax = 0
@@ -526,7 +524,7 @@ def get_electron_ecal_sp_hit(ecal_sp_hits):
 
     return ecal_sp_hit
 
-# Function to get the photon scoring plane hit at the target scoring plane
+# Function to get the photonuclear photon scoring plane hit at the target scoring plane
 def get_photon_target_sp_hit(target_sp_hits):
 
     pmax = 0
@@ -548,7 +546,7 @@ def get_photon_target_sp_hit(target_sp_hits):
 
     return target_sp_hit
 
-# Function to get the photon scoring plane hit at the ECal scoring plane
+# Function to get the PN photon scoring plane hit at the ECal scoring plane
 def get_photon_ecal_sp_hit(ecal_sp_hits):
 
     pmax = 0
@@ -570,7 +568,7 @@ def get_photon_ecal_sp_hit(ecal_sp_hits):
 
     return ecal_sp_hit
 
-# Function to infer the photonuclear photon's position and momentum at the target scoring plane
+# Function to infer the PN photon position and momentum at the target scoring plane
 def infer_photon_target_sp_hit(target_sp_hit):
 
     position = get_position(target_sp_hit)
