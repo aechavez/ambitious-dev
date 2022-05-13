@@ -589,23 +589,32 @@ class merged_event_container:
 ###########################
 
 def main():
-    
-    # Parse
-    parser = OptionParser()
-    parser.add_option('--seed', dest='seed',type="int",  default=2, help='Numpy random seed.')
-    parser.add_option('--max_evt', dest='max_evt',type="int",  default=1500000, help='Max Events to load')
-    parser.add_option('--train_frac', dest='train_frac',  default=.8, help='Fraction of events to use for training')
-    parser.add_option('--eta', dest='eta',type="float",  default=0.023, help='Learning Rate')
-    parser.add_option('--tree_number', dest='tree_number',type="int",  default=1000, help='Tree Number')
-    parser.add_option('--depth', dest='depth',type="int",  default=10, help='Max Tree Depth')
-    parser.add_option('-b', dest='bkg_file', default='./bdt_0/bkg_train.root', help='name of background file')
-    parser.add_option('-s', dest='sig_file', default='./bdt_0/sig_train.root', help='name of signal file')
-    parser.add_option('-o', dest='out_name',  default='bdt_test', help='Output Pickle Name')
-    (options, args) = parser.parse_args()
 
-    # Seed numpy's randomness
-    np.random.seed(options.seed)
-   
+    # Parse arguments passed by the user
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--seed', type = int, action = 'store', dest = 'seed', default = 2,
+                        help = 'Seed for NumPy randomness')
+    parser.add_argument('--train_frac', type = float, action = 'store', dest = 'training_fraction', default = 0.8,
+                        help = 'Fraction of events to use for training')
+    parser.add_argument('--eta', type = float, action = 'store', dest = 'eta', default = 0.023,
+                        help = 'Learning rate')
+    parser.add_argument('--num_rounds', type = int, action = 'store', dest = 'num_rounds', default = 1000,
+                        help = 'Number of boosting rounds')
+    parser.add_argument('--max_depth', type = int, action = 'store', dest = 'max_depth', default = 10,
+                        help = 'Maximum tree depth')
+    parser.add_argument('-s', action = 'store', dest = 'signal_file',
+                        help = 'Signal file name')
+    parser.add_argument('-b', action = 'store', dest = 'background_file',
+                        help = 'Background file name')
+    parser.add_argument('-o', action = 'store', dest = 'out_name', default = 'bdt',
+                        help = 'Output file name')
+    parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = 1500000,
+                        help = 'Maximum number of events to run over')
+    args = parser.parse_args()
+
+    # Seed NumPy randomness
+    np.random.seed(args.seed)
+
     # Get BDT num
     bdt_num=0
     Check=True
