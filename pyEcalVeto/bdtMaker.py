@@ -557,28 +557,38 @@ class event_container:
 
         print('\n[ INFO ] - Container shape: {}'.format(self.events.shape))
 
+    # Function to split events for training and cross-validation
     def train_test_split(self):
+
         self.x_train = self.events[:int(self.training_fraction*self.events.shape[0])]
         self.y_train = np.zeros(self.x_train.shape[0]) + (self.is_signal == True)
 
         self.x_test = self.events[int(self.training_fraction*self.events.shape[0]):]
         self.y_test = np.zeros(self.x_test.shape[0]) + (self.is_signal == True)
 
-class mergedContainer:
-    def __init__(self, sigContainer,bkgContainer):
-        self.train_x = np.vstack((sigContainer.train_x,bkgContainer.train_x))
-        self.train_y = np.append(sigContainer.train_y,bkgContainer.train_y)
-        
-        self.train_x[np.isnan(self.train_x)] = 0.000
-        self.train_y[np.isnan(self.train_y)] = 0.000
 
-        self.test_x  = np.vstack((sigContainer.test_x,bkgContainer.test_x))
-        self.test_y  = np.append(sigContainer.test_y,bkgContainer.test_y)
-        
-        self.dtrain = xgb.DMatrix(self.train_x,self.train_y)
-        self.dtest  = xgb.DMatrix(self.test_x,self.test_y)
+######################################################
+# Class to hold signal and background events
+######################################################
 
-if __name__ == "__main__":
+class merged_event_container:
+
+    def __init__(self, signal_container, background_container):
+
+        self.x_train = np.vstack((signal_container.x_train, background_container.x_train))
+        self.y_train = np.append(signal_container.y_train, background_container.y_train)
+        self.d_train = xgb.DMatrix(self.x_train, self.y_train)
+
+        self.x_test = np.vstack((signal_container.x_test, background_container.x_test))
+        self.y_test = np.append(signal_container.y_test, background_container.y_test)
+        self.d_test = xgb.DMatrix(self.x_test, self.y_test)
+
+
+###########################
+# Main subroutine
+###########################
+
+def main():
     
     # Parse
     parser = OptionParser()
@@ -664,3 +674,11 @@ if __name__ == "__main__":
     
     # Closing statment
     print("Files saved in: ", options.out_name+'_'+str(bdt_num))
+
+
+###############
+# RUN
+###############
+
+if __name__ == '__main__':
+    main()
