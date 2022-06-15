@@ -166,27 +166,27 @@ def process_event(self):
     # Electron and photon information
     ###########################################
 
-    # Get the electron position and momentum at the target
+    # Get the electron at the target scoring plane
     ele_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hits)
 
     if not (ele_target_sp_hit is None):
         ele_target_sp_pos = physTools.get_position(ele_target_sp_hit)
         ele_target_sp_mom = physTools.get_momentum(ele_target_sp_hit)
     else:
-        print('[ WARNING ] - No electron found at target scoring plane!')
+        print('[ WARNING ] - No electron at target scoring plane!')
         ele_target_sp_pos = ele_target_sp_mom = np.zeros(3)
 
-    # Get the electron position and momentum at the ECal
+    # Get the electron at the ECal scoring plane
     ele_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
 
     if not (ele_ecal_sp_hit is None):
         ele_ecal_sp_pos = physTools.get_position(ele_ecal_sp_hit)
         ele_ecal_sp_mom = physTools.get_momentum(ele_ecal_sp_hit)
     else:
-        print('[ WARNING ] - No electron found at ECal scoring plane!')
+        print('[ WARNING ] - No electron at ECal scoring plane!')
         ele_ecal_sp_pos = ele_ecal_sp_mom = np.zeros(3)
 
-    # Infer the photon position and momentum at the target
+    # Infer the photon's information at the target scoring plane
     if not (ele_target_sp_hit is None):
         pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_target_sp_hit(ele_target_sp_hit)
     else:
@@ -272,11 +272,11 @@ def process_event(self):
     origin = 0.5*physTools.cell_width*pho_to_ele + pho_traj_ends[0]
 
 
-    #########################################
-    # Radius of containment binning
-    #########################################
+    ######################
+    # RoC set up
+    ######################
 
-    # Recoil momentum magnitude and angle with respect to Z-axis
+    # Recoil momentum magnitude and angle
     recoil_mom_mag = recoil_mom_theta = -1
 
     if not (ele_ecal_sp_hit is None):
@@ -285,7 +285,6 @@ def process_event(self):
 
     # Set electron RoC binnings
     ele_radii = physTools.radius68_thetalt10_plt500
-
     if recoil_mom_theta < 10 and recoil_mom_mag >= 500: ele_radii = physTools.radius68_thetalt10_pgt500
     elif recoil_mom_theta >= 10 and recoil_mom_theta < 20: ele_radii = physTools.radius68_theta10to20
     elif recoil_mom_theta >= 20: ele_radii = physTools.radius68_thetagt20
@@ -506,8 +505,8 @@ def process_event(self):
         self.tree_models['unsorted'].fill(new_values)
     else:
         if fid_ele and fid_pho: self.tree_models['fiducial_electron_photon'].fill(new_values)
-        elif fid_ele and not fid_pho: self.tree_models['fiducial_electron'].fill(new_values)
-        elif not fid_ele and fid_pho: self.tree_models['fiducial_photon'].fill(new_values)
+        elif fid_ele and (not fid_pho): self.tree_models['fiducial_electron'].fill(new_values)
+        elif (not fid_ele) and fid_pho: self.tree_models['fiducial_photon'].fill(new_values)
         else: self.tree_models['non_fiducial'].fill(new_values)
 
 
