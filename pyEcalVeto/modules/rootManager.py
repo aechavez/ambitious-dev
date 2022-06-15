@@ -137,7 +137,7 @@ class TreeProcess:
                 if os.path.exists('{}/tmp_{}'.format(scratch_dir, num)): num += 1
                 else: check = False 
 
-            # Create and move to the temporary directory
+            # Create and move to the temporary directory (Being careful not to break batch jobs)
             self.temporary_directory = '{}/tmp_{}'.format(scratch_dir, num)
             print('\n[ INFO ] - Making temporary directory: {}'.format(self.temporary_directory))
             os.makedirs(self.temporary_directory)
