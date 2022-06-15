@@ -144,7 +144,8 @@ ecal_B_layers = 1
 ecal_C_layers = 9
 ecal_D_layers = 5
 
-# GDML comment indicates ECal thickness is 449.2mm, but the actual value is 450.2mm!
+# GDML comment indicates ECal thickness is 449.2mm,
+# but the actual value is 450.2mm!
 ECal_dz = preshower_Thickness\
           + layer_A_Thickness*ecal_A_layers\
           + layer_B_Thickness*ecal_B_layers\
@@ -170,8 +171,8 @@ ecal_front_z = 240.
 side_Ecal_dx = 800.
 side_Ecal_dy = 600.
 
-# Dimensions of ECal parent volume. The size is set to be 1mm larger than
-# the thickness of the ECal calculated above
+# Dimensions of ECal parent volume. The size is set to be 1mm larger
+# than the thickness of the ECal calculated above
 ecal_envelope_x = side_Ecal_dx
 ecal_envelope_y = side_Ecal_dy
 ecal_envelope_z = ECal_dz + 1.
@@ -338,7 +339,7 @@ nregions = 5
 segment_ends = np.array([[0, 5], [6, 16], [17, 33]])
 nsegments = segment_ends.shape[0]
 
-# Simple class for storing hit data
+# Class for storing hit data
 class HitData:
 
     def __init__(self, position = None, layer = None):
@@ -368,7 +369,7 @@ def get_momentum(hit):
 
     return np.array([hit.getMomentum()[0], hit.getMomentum()[1], hit.getMomentum()[2]])
 
-# Function to linearly project a point along a vector to a plane parallel to the XY-plane
+# Function to make a linear projection
 def linear_projection(x, u, z):
 
     x1, y1, z1 = x
@@ -385,7 +386,7 @@ def linear_projection(x, u, z):
 
     return np.array([x2, y2, z2])
 
-# Function to get the XY-intercepts of a point projected through a collection of planes
+# Function to get projected XY-intercepts
 def get_intercepts(x, u, zs):
 
     return np.array([linear_projection(x, u, z)[0:2] for z in zs])
@@ -398,12 +399,12 @@ def normalize(u):
 
     return u/norm
 
-# Function to calculate the Euclidean distance between two points
+# Function to calculate the distance between two points
 def distance(x, y):
 
     return np.sqrt(np.sum((x - y)**2))
 
-# Function to calculate the distance between a point and a line defined by two points
+# Function to calculate the distance between a point and a line
 def point_line_distance(x, y1, y2):
 
     norm = np.linalg.norm(y1 - y2)
@@ -478,7 +479,7 @@ def get_hcal_strip(hit):
 # Scoring plane hit information
 #########################################
 
-# Function to get the hit from the primary electron at the furthest downstream target scoring plane
+# Function to get the electron at the target scoring plane
 def get_electron_target_sp_hit(target_sp_hits):
 
     pmax = 0
@@ -501,7 +502,7 @@ def get_electron_target_sp_hit(target_sp_hits):
 
     return target_sp_hit
 
-# Function to get the electron scoring plane hit at the front ECal scoring plane
+# Function to get the electron at the ECal scoring plane
 def get_electron_ecal_sp_hit(ecal_sp_hits):
 
     pmax = 0
@@ -524,7 +525,7 @@ def get_electron_ecal_sp_hit(ecal_sp_hits):
 
     return ecal_sp_hit
 
-# Function to get the photonuclear photon scoring plane hit at the target scoring plane
+# Function to get the photon at the target scoring plane
 def get_photon_target_sp_hit(target_sp_hits):
 
     pmax = 0
@@ -546,7 +547,7 @@ def get_photon_target_sp_hit(target_sp_hits):
 
     return target_sp_hit
 
-# Function to get the PN photon scoring plane hit at the ECal scoring plane
+# Function to get the photon at the ECal scoring plane
 def get_photon_ecal_sp_hit(ecal_sp_hits):
 
     pmax = 0
@@ -568,7 +569,7 @@ def get_photon_ecal_sp_hit(ecal_sp_hits):
 
     return ecal_sp_hit
 
-# Function to infer the PN photon position and momentum at the target scoring plane
+# Function to infer the photon's information at the target scoring plane
 def infer_photon_target_sp_hit(target_sp_hit):
 
     position = get_position(target_sp_hit)
