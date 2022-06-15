@@ -6,31 +6,34 @@ import ROOT as r
 import sys
 
 
-###################################
-# Miscellaneous functions
-###################################
+#########################
+# Miscellaneous
+#########################
 
-# Function serving as a wrapper for argparse
+# Wrapper for argparse
 def parse():
 
+    # Set up parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_mode', action = 'store_true', dest = 'batch_mode', default = False,
                         help = 'Whether to run in batch mode (Default: False)')
     parser.add_argument('--separate', action = 'store_true', dest = 'separate_categories', default = False,
                         help = 'Whether to separate events by fiducial category (Default: False)')
-    parser.add_argument('-i', nargs = '+', action = 'store', dest = 'input_files', default = [],
-                        help = 'Space-separated list of input files')
     parser.add_argument('--input_dirs', nargs = '+', action = 'store', dest = 'input_directories', default = [],
                         help = 'Space-separated list of input file directories')
+    parser.add_argument('--out_dirs', '-o', nargs = '+', action = 'store', dest = 'outputs', default = [],
+                        help = 'Space-separated list of output files or output file directories')
+    parser.add_argument('-i', nargs = '+', action = 'store', dest = 'input_files', default = [],
+                        help = 'Space-separated list of input files')
     parser.add_argument('-g', nargs = '+', action = 'store', dest = 'group_labels', default = [],
                         help = 'Space-separated list of labels for each file group')
-    parser.add_argument('-o', '--out_dirs', nargs = '+', action = 'store', dest = 'outputs', default = [],
-                        help = 'Space-separated list of output files or output file directories')
     parser.add_argument('-s', type = int, action = 'store', dest = 'start_event', default = 0,
                         help = 'Index of first event to process')
     parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
                         help = 'Maximum number of events to run over for each file group')
     args = parser.parse_args()
+
+    # Enforce some conditions
 
     if not ((len(args.input_files) > 0 and len(args.input_directories) == 0)\
             or (len(args.input_files) == 0 and len(args.input_directories) > 0)):
@@ -60,14 +63,11 @@ def parse():
     elif len(args.input_files) == 0 and len(args.input_directories) > 0:
         inputs = [glob.glob('{}/*.root'.format(input_dir)) for input_dir in args.input_directories]
 
-    # Parse outputs
-    outputs = args.outputs
-    
     parsing_dict = {'batch_mode': args.batch_mode,
                     'separate_categories': args.separate_categories,
                     'inputs': inputs,
                     'group_labels': args.group_labels,
-                    'outputs': outputs,
+                    'outputs': args.outputs,
                     'start_event': args.start_event,
                     'max_events': args.max_events}
 
@@ -82,11 +82,11 @@ def load(file_names, tree_name):
 
     return tree
 
-# Function to remove the current scratch directory
+# Function to remove the scratch directory
 def remove_scratch():
 
     if os.path.exists('./scratch'):
-        print('\n[ INFO ] - Removing current scratch directory')
+        print('\n[ INFO ] - Removing scratch directory')
         os.system('rm -rf ./scratch')
 
 
@@ -125,24 +125,21 @@ class TreeProcess:
         if len(self.file_group) > 0 and self.tree is None:
             self.use_scratch = True
 
-            # Create the scratch directory if it doesn't already exist
+            # Make the scratch directory
             scratch_dir = '{}/scratch'.format(self.main_directory)
             print('\n[ INFO ] - Using scratch directory: {}'.format(scratch_dir))
-            if not os.path.exists(scratch_dir):
-                os.makedirs(scratch_dir)
+            if not os.path.exists(scratch_dir): os.makedirs(scratch_dir)
 
-            # Assign a temporary number to this process
+            # Assign a number label to this process
             num = 0
             check = True
             while check:
-                if os.path.exists('{}/tmp_{}'.format(scratch_dir, num)):
-                    num += 1
-                else:
-                    check = False 
+                if os.path.exists('{}/tmp_{}'.format(scratch_dir, num)): num += 1
+                else: check = False 
 
             # Create and move to the temporary directory
             self.temporary_directory = '{}/tmp_{}'.format(scratch_dir, num)
-            print('\n[ INFO ] - Creating temporary directory: {}'.format(self.temporary_directory))
+            print('\n[ INFO ] - Making temporary directory: {}'.format(self.temporary_directory))
             os.makedirs(self.temporary_directory)
             os.chdir(self.temporary_directory)
 
@@ -237,11 +234,11 @@ class TreeMaker:
 
         # Create output file and tree
         self.out_file = r.TFile(self.out_name, 'RECREATE')
-        self.tree = r.TTree(tree_name, tree_name)
+        self.tree = r.TTree(self.tree_name, self.tree_name)
 
         # Add branches to the tree if already given
-        for branch_name in branch_information:
-            data_type = branch_information[branch_name]['dtype']
+        for branch_name in self.branch_information:
+            data_type = self.branch_information[branch_name]['dtype']
             self.branches[branch_name] = np.zeros(1, dtype = data_type)
             if str(data_type) == "<type 'float'>" or str(data_type) == "<class 'float'>":
                 self.tree.Branch(branch_name, self.branches[branch_name], branch_name + '/D')
@@ -269,6 +266,7 @@ class TreeMaker:
 
         for branch_name in self.branches:
             self.branches[branch_name][0] = new_values[branch_name]
+
         self.tree.Fill()
 
     # Method to write to the tree
@@ -280,9 +278,9 @@ class TreeMaker:
 
         if self.out_directory != '':
 
-            # Create the output directory if it doesn't already exist
+            # Make the output directory
             if not os.path.exists(self.out_directory):
-                print('\n[ INFO ] - Creating output directory: {}'.format(self.out_directory))
+                print('\n[ INFO ] - Making output directory: {}'.format(self.out_directory))
                 os.makedirs(self.out_directory)
 
             print('\n[ INFO ] - Copying output file to output directory')
