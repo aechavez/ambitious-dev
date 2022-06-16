@@ -103,9 +103,7 @@ def main():
     # Build a tree process for each file group
     processes = []
     for label, group in zip(group_labels, inputs):
-        processes.append(manager.TreeProcess(process_event, file_group = group, name_tag = label,\
-                                             start_event = start_event, max_events = max_events,\
-                                             batch_mode = batch_mode))
+        processes.append(manager.TreeProcess(process_event, file_group = group, name_tag = label, batch_mode = batch_mode))
 
     # Loop to prepare each process and run
     for process in processes:
@@ -140,7 +138,7 @@ def main():
         process.closing_functions = [process.tree_models[tree_model].write for tree_model in process.tree_models]
 
         # Run this process
-        process.run()
+        process.run(start_event = start_event, max_events = max_events, print_frequency = 100)
 
     # Remove the scratch directory (Being careful not to break other jobs)
     if not batch_mode: manager.remove_scratch()
