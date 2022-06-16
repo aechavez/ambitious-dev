@@ -598,8 +598,8 @@ def main():
 
     # Set up parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', type = int, action = 'store', dest = 'seed', default = 2,
-                        help = 'Seed for randomness (Default: 2)')
+    parser.add_argument('--seed', type = int, action = 'store', dest = 'seed', default = 0,
+                        help = 'Seed for reproducibility (Default: 0)')
     parser.add_argument('--train_frac', type = float, action = 'store', dest = 'training_fraction', default = 0.8,
                         help = 'Fraction of events to use for training (Default: 0.8)')
     parser.add_argument('--num_boost_round', type = int, action = 'store', dest = 'boosting_rounds', default = 1000,
@@ -620,24 +620,24 @@ def main():
                         help = 'Signal file')
     parser.add_argument('-b', action = 'store', dest = 'background_file',
                         help = 'Background file')
-    parser.add_argument('-o', action = 'store', dest = 'output_name', default = 'bdt',
-                        help = 'Output BDT name')
+    parser.add_argument('-o', action = 'store', dest = 'model_name', default = 'bdt',
+                        help = 'Name of the BDT model to train')
     parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
-                        help = 'Maximum number of events to run over')
+                        help = 'Maximum number of events to run on')
     args = parser.parse_args()
 
-    # Seed for randomness
+    # Seed for reproducibility
     np.random.seed(args.seed)
 
     # Assign a number label to this training session
     num = 0
     check = True
     while check:
-        if os.path.exists('{}_train_out_{}'.format(args.output_name, num)): num += 1
+        if os.path.exists('{}_train_out_{}'.format(args.model_name, num)): num += 1
         else: check = False
 
     # Make the output directory
-    out_directory = '{}_train_out_{}'.format(args.output_name, num)
+    out_directory = '{}_train_out_{}'.format(args.model_name, num)
     print('\n[ INFO ] - Making output directory: {}'.format(out_directory))
     os.makedirs(out_directory)
 
@@ -682,16 +682,16 @@ def main():
 
     # Train the BDT model
     eval_list = [(merged_container.dtrain, 'train'), (merged_container.dtest, 'eval')]
-    gbm = xgb.train(params, eventContainer.dtrain, num_boost_round = args.boosting_rounds,
-                    evals = eval_list, early_stopping_rounds = args.stopping_rounds)
+    model = xgb.train(params, merged_container.dtrain, num_boost_round = args.boosting_rounds,
+                      evals = eval_list, early_stopping_rounds = args.stopping_rounds)
 
     # Save the BDT model
-    output = open('{}/{}_train_out_{}_weights.pkl'.format(out_directory, args.output_name, num), 'wb')
-    pkl.dump(gbm, output)
+    out_file = open('{}/{}_train_out_{}_weights.pkl'.format(out_directory, args.model_name, num), 'wb')
+    pkl.dump(model, out_file)
 
     # Plot feature importance
-    xgb.plot_importance(gbm)
-    mpl.pyplot.savefig('{}/{}_train_out_{}_fimportance.png'.format(out_directory, args.output_name, num),
+    xgb.plot_importance(model)
+    mpl.pyplot.savefig('{}/{}_train_out_{}_fimportance.png'.format(out_directory, args.model_name, num),
                        dpi = 500, bbox_inches = 'tight', pad_inches = 0.5)
 
     print('\n[ INFO ] - Training session finished!')
