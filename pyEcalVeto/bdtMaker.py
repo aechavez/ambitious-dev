@@ -653,15 +653,13 @@ def main():
     print('[ INFO ] - You set column subsampling ratio: {}'.format(args.column_subsample_ratio))
 
     # Build the signal container
-    signal_container = EventContainer(args.signal_file, True, max_events = args.max_events,
-                                      training_fraction = args.training_fraction)
-    signal_container.build()
+    signal_container = EventContainer(args.signal_file, True, training_fraction = args.training_fraction)
+    signal_container.build(max_events = args.max_events)
     signal_container.train_test_split()
 
     # Build the background container
-    background_container = EventContainer(args.background_file, False, max_events = args.max_events,
-                                          training_fraction = args.training_fraction)
-    background_container.build()
+    background_container = EventContainer(args.background_file, False, training_fraction = args.training_fraction)
+    background_container.build(max_events = args.max_events)
     background_container.train_test_split()
 
     # Merge the event containers
