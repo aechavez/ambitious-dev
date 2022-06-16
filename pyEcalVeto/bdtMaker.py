@@ -19,32 +19,39 @@ mpl.use('Agg')
 # Class to hold events
 ################################
 
-class event_container:
+class EventContainer:
 
-    def __init__(self, file_name, max_events, training_fraction, is_signal, print_frequency = 1000):
+    def __init__(self, file_name, is_signal, tree_name = 'EcalVeto', max_events = -1, training_fraction = 0.8,
+                 print_frequency = 1000):
 
-        print('\n[ INFO ] - Building event container')
-
-        self.tree = r.TChain('EcalVeto')
-        self.tree.Add(file_name)
-        self.max_events = max_events
-        self.training_fraction = training_fraction
+        self.file_name = file_name
         self.is_signal = is_signal
-        self.events = None
-        self.x_train = None
-        self.y_train = None
-        self.x_test = None
-        self.y_test = None
+        self.tree_name = tree_name
+        self.tree = r.TChain(self.tree_name)
+        self.tree.Add(self.file_name)
+        self.max_events = max_events
         self.event_count = 0
+        self.training_fraction = training_fraction
         self.print_frequency = print_frequency
+        self.events = []
+        self.x_train = []
+        self.y_train = []
+        self.x_test = []
+        self.y_test = []
 
-    # Function to convert events from ROOT to Python
-    def process_events(self, print_frequency = 1000):
+    # Method to build the event container
+    def build(self, max_events = -1, print_frequency = 1000):
+
+        if self.is_signal: print('\n[ INFO ] - Building signal event container')
+        else: print('\n[ INFO ] - Building background event container')
 
         # Reset some attributes if desired
+        if max_events != self.max_events: self.max_events = max_events
         if print_frequency != self.print_frequency: self.print_frequency = print_frequency
 
-        self.events = []
+        # max_events should be between 1 and tree->GetEntries()
+        if self.max_events < 1 or self.max_events > self.tree.GetEntries():
+            self.max_events = self.tree.GetEntries()
 
         # Loop to process each event
         for event in self.tree:
@@ -557,7 +564,7 @@ class event_container:
 
         print('\n[ INFO ] - Container shape: {}'.format(self.events.shape))
 
-    # Function to split events for training and cross-validation
+    # Method to split events for training and cross-validation
     def train_test_split(self):
 
         self.x_train = self.events[:int(self.training_fraction*self.events.shape[0])]
@@ -571,7 +578,7 @@ class event_container:
 # Class to hold signal and background events
 ######################################################
 
-class merged_event_container:
+class MergedEventContainer:
 
     def __init__(self, signal_container, background_container):
 
@@ -590,99 +597,105 @@ class merged_event_container:
 
 def main():
 
-    # Parse arguments passed by the user
+    # Set up parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type = int, action = 'store', dest = 'seed', default = 2,
-                        help = 'Seed for NumPy randomness')
+                        help = 'Seed for randomness (Default: 2)')
     parser.add_argument('--train_frac', type = float, action = 'store', dest = 'training_fraction', default = 0.8,
-                        help = 'Fraction of events to use for training')
-    parser.add_argument('--eta', type = float, action = 'store', dest = 'eta', default = 0.023,
-                        help = 'Learning rate')
-    parser.add_argument('--num_rounds', type = int, action = 'store', dest = 'num_rounds', default = 1000,
-                        help = 'Number of boosting rounds')
+                        help = 'Fraction of events to use for training (Default: 0.8)')
+    parser.add_argument('--num_boost_round', type = int, action = 'store', dest = 'boosting_rounds', default = 1000,
+                        help = 'Number of boosting rounds (Default: 1000)')
+    parser.add_argument('--early_stopping_rounds', type = int, action = 'store', dest = 'stopping_rounds', default = 10,
+                        help = 'Number of early stopping rounds (Default: 10)')
+    parser.add_argument('--eta', type = float, action = 'store', dest = 'learning_rate', default = 0.023,
+                        help = 'Learning rate (Default: 0.023)')
     parser.add_argument('--max_depth', type = int, action = 'store', dest = 'max_depth', default = 10,
-                        help = 'Maximum tree depth')
+                        help = 'Maximum tree depth (Default: 10)')
+    parser.add_argument('--min_child_weight', type = float, action = 'store', dest = 'min_child_weight', default = 20.,
+                        help = 'Minimum child weight (Default: 20)')
+    parser.add_argument('--subsample', type = float, action = 'store', dest = 'row_subsample_ratio', default = 0.9,
+                        help = 'Row subsampling ratio (Default: 0.9)')
+    parser.add_argument('--colsample_bytree', type = float, action = 'store', dest = 'column_subsample_ratio', default = 0.85,
+                        help = 'Column subsampling ratio (Default: 0.85)')
     parser.add_argument('-s', action = 'store', dest = 'signal_file',
                         help = 'Signal file name')
     parser.add_argument('-b', action = 'store', dest = 'background_file',
                         help = 'Background file name')
-    parser.add_argument('-o', action = 'store', dest = 'out_name', default = 'bdt',
-                        help = 'Output file name')
-    parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = 1500000,
+    parser.add_argument('-o', action = 'store', dest = 'output_name', default = 'bdt',
+                        help = 'Output BDT name')
+    parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
                         help = 'Maximum number of events to run over')
     args = parser.parse_args()
 
-    # Seed NumPy randomness
+    # Seed for randomness
     np.random.seed(args.seed)
 
-    # Get BDT num
-    bdt_num=0
-    Check=True
-    while Check:
-        if not os.path.exists(options.out_name+'_'+str(bdt_num)):
-            try:
-                os.makedirs(options.out_name+'_'+str(bdt_num))
-                Check=False
-            except:
-               Check=True
-        else:
-            bdt_num+=1
+    # Assign a number label to this training session
+    num = 0
+    check = True
+    while check:
+        if os.path.exists('{}_train_out_{}'.format(args.output_name, num)): num += 1
+        else: check = False
 
-    # Print run info
-    print( 'Random seed is = {}'.format(options.seed)             )
-    print( 'You set max_evt = {}'.format(options.max_evt)         )
-    print( 'You set tree number = {}'.format(options.tree_number) )
-    print( 'You set max tree depth = {}'.format(options.depth)    )
-    print( 'You set eta = {}'.format(options.eta)                 )
+    # Make the output directory
+    out_directory = '{}_train_out_{}'.format(args.output_name, num)
+    print('\n[ INFO ] - Making output directory: {}'.format(out_directory))
+    os.makedirs(out_directory)
 
-    # Make Signal Container
-    print( 'Loading sig_file = {}'.format(options.sig_file) )
-    sigContainer = sampleContainer(options.sig_file,options.max_evt,options.train_frac,True)
-    sigContainer.root2PyEvents()
-    sigContainer.constructTrainAndTest()
+    # Print settings for this session
+    print('\n[ INFO ] - You set random seed: {}'.format(args.seed))
+    print('[ INFO ] - You set training fraction: {}'.format(args.training_fraction))
+    print('[ INFO ] - You set number of boosting rounds: {}'.format(args.boosting_rounds))
+    print('[ INFO ] - You set number of early stopping rounds: {}'.format(args.stopping_rounds))
+    print('[ INFO ] - You set learning rate: {}'.format(args.learning_rate))
+    print('[ INFO ] - You set maximum tree depth: {}'.format(args.max_depth))
+    print('[ INFO ] - You set minimum child weight: {}'.format(args.min_child_weight))
+    print('[ INFO ] - You set row subsampling ratio: {}'.format(args.row_subsample_ratio))
+    print('[ INFO ] - You set column subsampling ratio: {}'.format(args.column_subsample_ratio))
 
-    # Make Background Container
-    print( 'Loading bkg_file = {}'.format(options.bkg_file) )
-    bkgContainer = sampleContainer(options.bkg_file,options.max_evt,options.train_frac,False)
-    bkgContainer.root2PyEvents()
-    bkgContainer.constructTrainAndTest()
+    # Build the signal container
+    signal_container = EventContainer(args.signal_file, True, max_events = args.max_events,
+                                      training_fraction = args.training_fraction)
+    signal_container.build()
+    signal_container.train_test_split()
 
-    # Merge
-    eventContainer = mergedContainer(sigContainer,bkgContainer)
+    # Build the background container
+    background_container = EventContainer(args.background_file, False, max_events = args.max_events,
+                                          training_fraction = args.training_fraction)
+    background_container.build()
+    background_container.train_test_split()
+
+    # Merge the event containers
+    merged_container = MergedEventContainer(signal_container, background_container)
 
     params = {
-               'objective': 'binary:logistic',
-               'eta': options.eta,
-               'max_depth': options.depth,
-               'min_child_weight': 20,
-               # 'silent': 1,
-               'subsample':.9,
-               'colsample_bytree': .85,
-               # 'eval_metric': 'auc',
-               'eval_metric': 'error',
-               'seed': 1,
-               'nthread': 1,
-               'verbosity': 1
-               # 'early_stopping_rounds' : 10
+        'objective': 'binary:logistic',
+        'eta': args.learning_rate,
+        'max_depth': args.max_depth,
+        'min_child_weight': args.min_child_weight,
+        'subsample': args.row_subsample_ratio,
+        'colsample_bytree': args.column_subsample_ratio,
+        'eval_metric': 'error',
+        'seed': args.seed,
+        'nthread': 1,
+        'verbosity': 1
     }
 
     # Train the BDT model
-    evallist = [(eventContainer.dtest,'eval'), (eventContainer.dtrain,'train')]
-    gbm = xgb.train(params, eventContainer.dtrain, options.tree_number, evallist, early_stopping_rounds = 10)
+    eval_list = [(merged_container.dtrain, 'train'), (merged_container.dtest, 'eval')]
+    gbm = xgb.train(params, eventContainer.dtrain, num_boost_round = args.boosting_rounds,
+                    evals = eval_list, early_stopping_rounds = args.stopping_rounds)
 
-    # Store BDT
-    output = open(options.out_name+'_'+str(bdt_num)+'/' + \
-            options.out_name+'_'+str(bdt_num)+'_weights.pkl', 'wb')
+    # Save the BDT model
+    output = open('{}/{}_train_out_{}_weights.pkl'.format(out_directory, args.output_name, num), 'wb')
     pkl.dump(gbm, output)
 
-    # Plot feature importances
+    # Plot feature importance
     xgb.plot_importance(gbm)
-    plt.pyplot.savefig(options.out_name+'_'+str(bdt_num)+"/" + \
-            options.out_name+'_'+str(bdt_num)+'_fimportance.png', # png file name
-            dpi=500, bbox_inches='tight', pad_inches=0.5) # png parameters
-    
-    # Closing statment
-    print("Files saved in: ", options.out_name+'_'+str(bdt_num))
+    mpl.pyplot.savefig('{}/{}_train_out_{}_fimportance.png'.format(out_directory, args.output_name, num),
+            dpi = 500, bbox_inches = 'tight', pad_inches = 0.5)
+
+    print('\n[ INFO ] - Training session finished!')
 
 
 ###############
