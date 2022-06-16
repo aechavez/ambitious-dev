@@ -5,7 +5,6 @@ import numpy as np
 import os
 import pickle as pkl
 import ROOT as r
-import sys
 import xgboost as xgb
 
 
@@ -618,9 +617,9 @@ def main():
     parser.add_argument('--colsample_bytree', type = float, action = 'store', dest = 'column_subsample_ratio', default = 0.85,
                         help = 'Column subsampling ratio (Default: 0.85)')
     parser.add_argument('-s', action = 'store', dest = 'signal_file',
-                        help = 'Signal file name')
+                        help = 'Signal file')
     parser.add_argument('-b', action = 'store', dest = 'background_file',
-                        help = 'Background file name')
+                        help = 'Background file')
     parser.add_argument('-o', action = 'store', dest = 'output_name', default = 'bdt',
                         help = 'Output BDT name')
     parser.add_argument('-m', type = int, action = 'store', dest = 'max_events', default = -1,
@@ -645,8 +644,8 @@ def main():
     # Print settings for this session
     print('\n[ INFO ] - You set random seed: {}'.format(args.seed))
     print('[ INFO ] - You set training fraction: {}'.format(args.training_fraction))
-    print('[ INFO ] - You set number of boosting rounds: {}'.format(args.boosting_rounds))
-    print('[ INFO ] - You set number of early stopping rounds: {}'.format(args.stopping_rounds))
+    print('[ INFO ] - You set number boosting rounds: {}'.format(args.boosting_rounds))
+    print('[ INFO ] - You set number early stopping rounds: {}'.format(args.stopping_rounds))
     print('[ INFO ] - You set learning rate: {}'.format(args.learning_rate))
     print('[ INFO ] - You set maximum tree depth: {}'.format(args.max_depth))
     print('[ INFO ] - You set minimum child weight: {}'.format(args.min_child_weight))
@@ -693,7 +692,7 @@ def main():
     # Plot feature importance
     xgb.plot_importance(gbm)
     mpl.pyplot.savefig('{}/{}_train_out_{}_fimportance.png'.format(out_directory, args.output_name, num),
-            dpi = 500, bbox_inches = 'tight', pad_inches = 0.5)
+                       dpi = 500, bbox_inches = 'tight', pad_inches = 0.5)
 
     print('\n[ INFO ] - Training session finished!')
 
