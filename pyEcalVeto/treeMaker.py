@@ -13,30 +13,30 @@ r.gSystem.Load('libFramework.so')
 branch_information = {
 
     # Fernand variables
-    'nReadoutHits':              {'dtype': int,   'default': 0 },
-    'summedDet':                 {'dtype': float, 'default': 0.},
-    'summedTightIso':            {'dtype': float, 'default': 0.},
-    'maxCellDep':                {'dtype': float, 'default': 0.},
-    'showerRMS':                 {'dtype': float, 'default': 0.},
-    'xStd':                      {'dtype': float, 'default': 0.},
-    'yStd':                      {'dtype': float, 'default': 0.},
-    'avgLayerHit':               {'dtype': float, 'default': 0.},
-    'stdLayerHit':               {'dtype': float, 'default': 0.},
-    'deepestLayerHit':           {'dtype': int,   'default': 0 },
-    'ecalBackEnergy':            {'dtype': float, 'default': 0.},
+    'nReadoutHits':               {'dtype': int,   'default': 0 },
+    'summedDet':                  {'dtype': float, 'default': 0.},
+    'summedTightIso':             {'dtype': float, 'default': 0.},
+    'maxCellDep':                 {'dtype': float, 'default': 0.},
+    'showerRMS':                  {'dtype': float, 'default': 0.},
+    'xStd':                       {'dtype': float, 'default': 0.},
+    'yStd':                       {'dtype': float, 'default': 0.},
+    'avgLayerHit':                {'dtype': float, 'default': 0.},
+    'stdLayerHit':                {'dtype': float, 'default': 0.},
+    'deepestLayerHit':            {'dtype': int,   'default': 0 },
+    'ecalBackEnergy':             {'dtype': float, 'default': 0.},
 
     # MIP tracking variables
-    'straight4':                 {'dtype': int,   'default': 0 },
-    'firstNearPhotonLayer':      {'dtype': int,   'default': 33},
-    'nNearPhotonHits':           {'dtype': int,   'default': 0 },
-    'fullElectronTerritoryHits': {'dtype': int,   'default': 0 },
-    'fullPhotonTerritoryHits':   {'dtype': int,   'default': 0 },
-    'fullTerritoryRatio':        {'dtype': float, 'default': 1.},
-    'electronTerritoryHits':     {'dtype': int,   'default': 0 },
-    'photonTerritoryHits':       {'dtype': int,   'default': 0 },
-    'territoryRatio':            {'dtype': float, 'default': 1.},
-    'trajectorySeparation':      {'dtype': float, 'default': 0.},
-    'trajectoryDot':             {'dtype': float, 'default': 0.}
+    'nStraightTracks':            {'dtype': int,   'default': 0 },
+    'firstNearPhotonLayer':       {'dtype': int,   'default': 33},
+    'nNearPhotonHits':            {'dtype': int,   'default': 0 },
+    'nFullElectronTerritoryHits': {'dtype': int,   'default': 0 },
+    'nFullPhotonTerritoryHits':   {'dtype': int,   'default': 0 },
+    'fullTerritoryRatio':         {'dtype': float, 'default': 1.},
+    'nElectronTerritoryHits':     {'dtype': int,   'default': 0 },
+    'nPhotonTerritoryHits':       {'dtype': int,   'default': 0 },
+    'territoryRatio':             {'dtype': float, 'default': 1.},
+    'trajectorySep':              {'dtype': float, 'default': 0.},
+    'trajectoryDot':              {'dtype': float, 'default': 0.}
 }
 
 for i in range(1, physTools.nsegments + 1):
@@ -249,7 +249,7 @@ def process_event(self):
         ele_traj_vec = physTools.normalize(ele_traj_ends[1] - ele_traj_ends[0])
         pho_traj_vec = physTools.normalize(pho_traj_ends[1] - pho_traj_ends[0])
 
-        new_values['trajectorySeparation'] = physTools.distance(ele_traj_ends[0], pho_traj_ends[0])
+        new_values['trajectorySep'] = physTools.distance(ele_traj_ends[0], pho_traj_ends[0])
         new_values['trajectoryDot'] = np.dot(ele_traj_vec, pho_traj_vec)
     else:
 
@@ -259,7 +259,7 @@ def process_event(self):
         pho_traj_ends = np.array([[1000., 1000., 0.], [1000., 1000., 1000.]])
 
         # Assign dummy values in this case
-        new_values['trajectorySeparation'] = 11.
+        new_values['trajectorySep'] = 11.
         new_values['trajectoryDot'] = 4.
 
     # For straight tracks algorithm
@@ -316,8 +316,8 @@ def process_event(self):
             # Determine which full territory the hit is in and add to sums
             hit_prime = physTools.get_position(hit) - origin
 
-            if np.dot(hit_prime, pho_to_ele) > 0: new_values['fullElectronTerritoryHits'] += 1
-            else:  new_values['fullPhotonTerritoryHits'] += 1
+            if np.dot(hit_prime, pho_to_ele) > 0: new_values['nFullElectronTerritoryHits'] += 1
+            else:  new_values['nFullPhotonTerritoryHits'] += 1
 
             # Determine which longitudinal segment the hit is in and add to sums
             for i in range(1, physTools.nsegments + 1):
@@ -482,21 +482,21 @@ def process_event(self):
     if not (ele_traj is None):
         for hit in tracking_hit_list:
             hit_prime = physTools.get_position(hit) - origin
-            if np.dot(hit_prime, pho_to_ele) > 0: new_values['electronTerritoryHits'] += 1
-            else: new_values['photonTerritoryHits'] += 1
+            if np.dot(hit_prime, pho_to_ele) > 0: new_values['nElectronTerritoryHits'] += 1
+            else: new_values['nPhotonTerritoryHits'] += 1
     else:
-        new_values['photonTerritoryHits'] = new_values['nReadoutHits']
+        new_values['nPhotonTerritoryHits'] = new_values['nReadoutHits']
         new_values['territoryRatio'] = 10
-        new_values['fullTerritoryRatio'] = 10
+        new_values['nFullTerritoryRatio'] = 10
 
-    if new_values['electronTerritoryHits'] != 0:
-        new_values['territoryRatio'] = new_values['photonTerritoryHits']/new_values['electronTerritoryHits']
-    if new_values['fullElectronTerritoryHits'] != 0:
-        new_values['fullTerritoryRatio'] = new_values['fullPhotonTerritoryHits']/new_values['fullElectronTerritoryHits']
+    if new_values['nElectronTerritoryHits'] != 0:
+        new_values['territoryRatio'] = new_values['nPhotonTerritoryHits']/new_values['nElectronTerritoryHits']
+    if new_values['nFullElectronTerritoryHits'] != 0:
+        new_values['fullTerritoryRatio'] = new_values['nFullPhotonTerritoryHits']/new_values['nFullElectronTerritoryHits']
 
-    # Find MIP tracks with straight4 algorithm
-    new_values['straight4'], tracking_hit_list = mipTracking.findStraightTracks(tracking_hit_list, ele_traj_ends,\
-                                                                                pho_traj_ends, mst = 4, returnHitList = True)
+    # Find straight tracks
+    new_values['nStraightTracks'], tracking_hit_list = mipTracking.findStraightTracks(tracking_hit_list, ele_traj_ends,\
+                                                                                      pho_traj_ends, mst = 4, returnHitList = True)
 
     # Fill the branches of each tree model with new values
     if not self.separate_categories:
