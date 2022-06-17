@@ -4,7 +4,7 @@
 ## Requirements: Working install of `ldmx-sw-v2.3.0` or greater and `v12` samples
 ## Only tested with a container including `numpy`, `xgboost`, and `matplotlib` packages
 
-Currently set to run the segmentation + MIP tracking BDT
+Currently set to run the full segmentation + MIP tracking BDT
 
 Example treeMaker command to make flat trees from event samples:
 ```
