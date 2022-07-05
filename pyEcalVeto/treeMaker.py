@@ -64,24 +64,24 @@ for i in range(1, physTools.nsegments + 1):
         branch_information['electronContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
         # Photon RoC variables
-        branch_information['photonContainmentEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
-        branch_information['photonContainmentXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentEnergy_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentNHits_x{}_s{}'.format(j, i)]       = {'dtype': int,   'default': 0 }
+        branch_information['photonContainmentXMean_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentYMean_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentLayerMean_x{}_s{}'.format(j, i)]   = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentXStd_x{}_s{}'.format(j, i)]        = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentYStd_x{}_s{}'.format(j, i)]        = {'dtype': float, 'default': 0.}
+        branch_information['photonContainmentLayerStd_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
 
         # Outside RoC variables
-        branch_information['outsideContainmentEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
-        branch_information['outsideContainmentXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentEnergy_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentNHits_x{}_s{}'.format(j, i)]      = {'dtype': int,   'default': 0 }
+        branch_information['outsideContainmentXMean_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentYMean_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentLayerMean_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentXStd_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentYStd_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
+        branch_information['outsideContainmentLayerStd_x{}_s{}'.format(j, i)]   = {'dtype': float, 'default': 0.}
 
 
 ###########################
