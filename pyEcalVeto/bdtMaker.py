@@ -77,16 +77,16 @@ class EventContainer:
                 event.ecalBackEnergy                    ,
 
                 # MIP tracking variables
-                event.straight4                         ,
+                event.nStraightTracks                   ,
                 event.firstNearPhotonLayer              ,
                 event.nNearPhotonHits                   ,
-                event.fullElectronTerritoryHits         ,
-                event.fullPhotonTerritoryHits           ,
+                event.nFullElectronTerritoryHits        ,
+                event.nFullPhotonTerritoryHits          ,
                 event.fullTerritoryRatio                ,
-                event.electronTerritoryHits             ,
-                event.photonTerritoryHits               ,
+                event.nElectronTerritoryHits            ,
+                event.nPhotonTerritoryHits              ,
                 event.territoryRatio                    ,
-                event.trajectorySeparation              ,
+                event.trajectorySep                     ,
                 event.trajectoryDot                     ,
 
                 # Longitudinal segment variables
