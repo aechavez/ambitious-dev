@@ -631,8 +631,9 @@ def process_event(self):
     }
 
     # Add the prediction to the dictionary
-    evt = np.array([[new_values[branch_name] for branch_name in new_values]])
-    pred = float(model.predict(xgb.DMatrix(evt))[0])
+    evt = [new_values[branch_name] for branch_name in new_values]
+    events = np.array([evt])
+    pred = float(model.predict(xgb.DMatrix(events))[0])
     new_values['discValue'] = pred
 
     # Fill the tree with new values
