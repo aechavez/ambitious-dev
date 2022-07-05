@@ -635,6 +635,7 @@ def process_event(self):
     pred = float(model.predict(xgb.DMatrix(evt))[0])
     new_values['discValue'] = pred
 
+    # Fill the tree with new values
     self.tree_model.fill(new_values)
 
 
