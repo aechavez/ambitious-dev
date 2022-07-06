@@ -163,22 +163,22 @@ for i in range(1, physTools.nsegments + 1):
 
 # Simulated particle branch informtion
 sim_particle_branch_information = {
-    'pdgID':      {'address': np.zeros(1, dtype = int  ), 'rtype': int  },
-    'trackID':    {'address': np.zeros(1, dtype = int  ), 'rtype': int  },
-    'mass':       {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'charge':     {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'energy':     {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'vert_x':     {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'vert_y':     {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'vert_z':     {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'end_x':      {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'end_y':      {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'end_z':      {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'px':         {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'py':         {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'pz':         {'address': np.zeros(1, dtype = float), 'rtype': float},
-    'nParents':   {'address': np.zeros(1, dtype = int  ), 'rtype': int  },
-    'nDaughters': {'address': np.zeros(1, dtype = int  ), 'rtype': int  }
+    'pdgID':      {'dtype': int,   'address': np.zeros(1, dtype = int)  },
+    'trackID':    {'dtype': int,   'address': np.zeros(1, dtype = int)  },
+    'mass':       {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'charge':     {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'energy':     {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'vert_x':     {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'vert_y':     {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'vert_z':     {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'end_x':      {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'end_y':      {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'end_z':      {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'px':         {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'py':         {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'pz':         {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'nParents':   {'dtype': int,   'address': np.zeros(1, dtype = int)  },
+    'nDaughters': {'dtype': int,   'address': np.zeros(1, dtype = int)  }
 }
 for branch_name in ecal_branch_information:
     sim_particle_branch_information[branch_name] = {'dtype': ecal_branch_information[branch_name]['dtype'],\
@@ -237,10 +237,13 @@ def main():
         os.chdir(process.temporary_directory)
 
         # Add branches needed for analysis
-        process.target_sp_hits = process.add_branch('SimTrackerHit', 'TargetScoringPlaneHits_v12')
-        process.ecal_sp_hits = process.add_branch('SimTrackerHit', 'EcalScoringPlaneHits_v12')
-        process.ecal_rec_hits = process.add_branch('EcalHit', 'EcalRecHits_v12')
-        process.ecal_veto = process.add_branch('EcalVetoResult', 'EcalVeto_v12')
+        process.event_header = process.addBranch('EventHeader', 'EventHeader')
+        process.target_sp_hits = process.addBranch('SimTrackerHit', 'TargetScoringPlaneHits_v12')
+        process.ecal_sp_hits = process.addBranch('SimTrackerHit', 'EcalScoringPlaneHits_v12')
+        process.sim_particles = process.addBranch('SimParticle', 'SimParticles_v12')
+        process.ecal_sim_hits = process.addBranch('SimCalorimeterHit', 'EcalSimHits_v12')
+        process.ecal_rec_hits = process.addBranch('EcalHit', 'EcalRecHits_v12')
+        process.ecal_veto = process.addBranch('EcalVetoResult', 'EcalVeto_v12')
 
         # Dictionary of categories for tree models
         process.separate_categories = separate_categories
@@ -259,8 +262,53 @@ def main():
                                                                 'EcalVeto', branch_information = branch_information,\
                                                                 out_directory = outputs[processes.index(process)])
 
+        # Tree for simulated particle information
+        process.sim_particles = r.TTree('SimParticles', 'Simulated particle information')
+
+        for branch_name in sim_particle_branch_information:
+
+            if str(sim_particle_branch_information[branch_name]['dtype']) == "<class 'float'>"\
+              or str(sim_particle_branch_information[branch_name]['dtype']) == "<type 'float'>":
+                process.sim_particles.Branch(branch_name, sim_particle_branch_information[branch_name]['address'], '{}/D'.format(branch_name))
+
+            elif str(sim_particle_branch_information[branch_name]['dtype']) == "<class 'int'>"\
+              or str(sim_particle_branch_information[branch_name]['dtype']) == "<type 'int'>":
+                process.sim_particles.Branch(branch_name, sim_particle_branch_information[branch_name]['address'], '{}/I'.format(branch_name))
+
+        # Tree for simulated hit information
+        process.sim_hits = r.TTree('SimHits', 'Simulated hit information')
+
+        for branch_name in sim_hit_branch_information:
+
+            if str(sim_hit_branch_information[branch_name]['dtype']) == "<class 'float'>"\
+              or str(sim_hit_branch_information[branch_name]['dtype']) == "<type 'float'>":
+                process.sim_hits.Branch(branch_name, sim_hit_branch_information[branch_name]['address'], '{}/D'.format(branch_name))
+
+            elif str(sim_hit_branch_information[branch_name]['dtype']) == "<class 'int'>"\
+              or str(sim_hit_branch_information[branch_name]['dtype']) == "<type 'int'>":
+                process.sim_hits.Branch(branch_name, sim_hit_branch_information[branch_name]['address'], '{}/I'.format(branch_name))
+
+        # Tree for reconstructed hit information
+        process.rec_hits = r.TTree('RecHits', 'Reconstructed hit information')
+
+        for branch_name in rec_hit_branch_information:
+
+            if str(rec_hit_branch_information[branch_name]['dtype']) == "<class 'float'>"\
+              or str(rec_hit_branch_information[branch_name]['dtype']) == "<type 'float'>":
+                process.rec_hits.Branch(branch_name, rec_hit_branch_information[branch_name]['address'], '{}/D'.format(branch_name))
+
+            elif str(rec_hit_branch_information[branch_name]['dtype']) == "<class 'int'>"\
+              or str(rec_hit_branch_information[branch_name]['dtype']) == "<type 'int'>":
+                process.rec_hits.Branch(branch_name, rec_hit_branch_information[branch_name]['address'], '{}/I'.format(branch_name))
+
         # Set closing functions
-        process.closing_functions = [process.tree_models[tree_model].write for tree_model in process.tree_models]
+        process.closing_functions = []
+        for tree_model in process.tree_models:
+            process.closing_functions.append(process.sim_particles.Write)
+            process.closing_functions.append(process.sim_hits.Write)
+            process.closing_functions.append(process.rec_hits.Write)
+        for tree_model in process.tree_models:
+            process.closing_functions.append(process.tree_models[tree_model].write)
 
         # Run this process
         process.run(start_event = start_event, max_events = max_events, print_frequency = 100)
