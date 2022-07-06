@@ -359,8 +359,8 @@ def get_position(hit):
     try: return np.array([hit.getPosition()[0], hit.getPosition()[1], hit.getPosition()[2]])
     except AttributeError: return np.array([hit.getXPos(), hit.getYPos(), hit.getZPos()])
 
-# Function to get the layerZ of a ECalHit
-def get_layerZ(hit):
+# Function to get the layer z of a ECal hit
+def get_layer_z(hit):
 
     return ecal_layerZs[get_ecal_layer(hit)]
 
@@ -370,7 +370,7 @@ def get_momentum(hit):
     return np.array([hit.getMomentum()[0], hit.getMomentum()[1], hit.getMomentum()[2]])
 
 # Function to make a linear projection
-def linear_projection(x, u, z):
+def project(x, u, z):
 
     x1, y1, z1 = x
     ux, uy, uz = u
@@ -389,7 +389,7 @@ def linear_projection(x, u, z):
 # Function to get projected XY-intercepts
 def get_intercepts(x, u, zs):
 
-    return np.array([linear_projection(x, u, z)[0:2] for z in zs])
+    return np.array([project(x, u, z)[0:2] for z in zs])
 
 # Function to normalize a vector
 def normalize(u):
@@ -405,7 +405,7 @@ def distance(x, y):
     return np.sqrt(np.sum((x - y)**2))
 
 # Function to calculate the distance between a point and a line
-def point_line_distance(x, y1, y2):
+def point_line_dist(x, y1, y2):
 
     norm = np.linalg.norm(y1 - y2)
     if norm == 0: return np.sqrt(np.sum((x - y1)**2))
@@ -413,7 +413,7 @@ def point_line_distance(x, y1, y2):
     return np.linalg.norm(np.cross(x - y1, y1 - y2))/norm
 
 # Function to calculate the distance between two lines
-def line_line_distance(x1, x2, y1, y2):
+def line_line_dist(x1, x2, y1, y2):
 
     cross = np.cross(x1 - x2, y1 - y2)
     norm = np.linalg.norm(cross)
@@ -480,7 +480,7 @@ def get_hcal_strip(hit):
 #########################################
 
 # Function to get the electron at the target scoring plane
-def get_electron_target_sp_hit(target_sp_hits):
+def get_ele_targ_sp_hit(target_sp_hits):
 
     pmax = 0
     target_sp_hit = None
@@ -503,7 +503,7 @@ def get_electron_target_sp_hit(target_sp_hits):
     return target_sp_hit
 
 # Function to get the electron at the ECal scoring plane
-def get_electron_ecal_sp_hit(ecal_sp_hits):
+def get_ele_ecal_sp_hit(ecal_sp_hits):
 
     pmax = 0
     ecal_sp_hit = None
@@ -526,7 +526,7 @@ def get_electron_ecal_sp_hit(ecal_sp_hits):
     return ecal_sp_hit
 
 # Function to get the photon at the target scoring plane
-def get_photon_target_sp_hit(target_sp_hits):
+def get_pho_targ_sp_hit(target_sp_hits):
 
     pmax = 0
     target_sp_hit = None
@@ -548,7 +548,7 @@ def get_photon_target_sp_hit(target_sp_hits):
     return target_sp_hit
 
 # Function to get the photon at the ECal scoring plane
-def get_photon_ecal_sp_hit(ecal_sp_hits):
+def get_pho_ecal_sp_hit(ecal_sp_hits):
 
     pmax = 0
     ecal_sp_hit = None
@@ -570,7 +570,7 @@ def get_photon_ecal_sp_hit(ecal_sp_hits):
     return ecal_sp_hit
 
 # Function to infer the photon's information at the target scoring plane
-def infer_photon_target_sp_hit(target_sp_hit):
+def infer_pho_targ_sp_hit(target_sp_hit):
 
     position = get_position(target_sp_hit)
     momentum = get_momentum(target_sp_hit)
