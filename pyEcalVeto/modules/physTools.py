@@ -370,7 +370,7 @@ def get_momentum(hit):
     return np.array([hit.getMomentum()[0], hit.getMomentum()[1], hit.getMomentum()[2]])
 
 # Function to make a linear projection
-def project(x, u, z):
+def lin_proj(x, u, z):
 
     x1, y1, z1 = x
     ux, uy, uz = u
@@ -389,7 +389,7 @@ def project(x, u, z):
 # Function to get projected xy-intercepts
 def get_intercepts(x, u, zs):
 
-    return np.array([project(x, u, z)[0:2] for z in zs])
+    return np.array([lin_proj(x, u, z)[0:2] for z in zs])
 
 # Function to normalize a vector
 def normalize(u):
