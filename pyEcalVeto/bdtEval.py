@@ -35,8 +35,8 @@ branch_information = {
     'nElectronTerritoryHits':     {'dtype': int,   'default': 0 },
     'nPhotonTerritoryHits':       {'dtype': int,   'default': 0 },
     'territoryRatio':             {'dtype': float, 'default': 1.},
-    'trajectorySep':              {'dtype': float, 'default': 0.},
-    'trajectoryDot':              {'dtype': float, 'default': 0.}
+    'trajSep':                    {'dtype': float, 'default': 0.},
+    'trajDot':                    {'dtype': float, 'default': 0.}
 }
 
 for i in range(1, physTools.nsegments + 1):
@@ -163,8 +163,8 @@ def process_event(self):
         'nElectronTerritoryHits':             self.tree.nElectronTerritoryHits            ,
         'nPhotonTerritoryHits':               self.tree.nPhotonTerritoryHits              ,
         'territoryRatio':                     self.tree.territoryRatio                    ,
-        'trajectorySep':                      self.tree.trajectorySep                     ,
-        'trajectoryDot':                      self.tree.trajectoryDot                     ,
+        'trajSep':                            self.tree.trajSep                           ,
+        'trajDot':                            self.tree.trajDot                           ,
 
         # Longitudinal segment variables
         'energy_s1':                          self.tree.energy_s1                         ,
