@@ -35,8 +35,8 @@ branch_information = {
     'nElectronTerritoryHits':     {'dtype': int,   'default': 0 },
     'nPhotonTerritoryHits':       {'dtype': int,   'default': 0 },
     'territoryRatio':             {'dtype': float, 'default': 1.},
-    'trajectorySep':              {'dtype': float, 'default': 0.},
-    'trajectoryDot':              {'dtype': float, 'default': 0.}
+    'trajSep':                    {'dtype': float, 'default': 0.},
+    'trajDot':                    {'dtype': float, 'default': 0.}
 }
 
 for i in range(1, physTools.nsegments + 1):
@@ -249,8 +249,8 @@ def process_event(self):
         ele_traj_vec = physTools.normalize(ele_traj_ends[1] - ele_traj_ends[0])
         pho_traj_vec = physTools.normalize(pho_traj_ends[1] - pho_traj_ends[0])
 
-        new_values['trajectorySep'] = physTools.distance(ele_traj_ends[0], pho_traj_ends[0])
-        new_values['trajectoryDot'] = np.dot(ele_traj_vec, pho_traj_vec)
+        new_values['trajSep'] = physTools.distance(ele_traj_ends[0], pho_traj_ends[0])
+        new_values['trajDot'] = np.dot(ele_traj_vec, pho_traj_vec)
     else:
 
         # One of the trajectories is missing, so use all of the hits in the ECal for MIP tracking
@@ -259,8 +259,8 @@ def process_event(self):
         pho_traj_ends = np.array([[1000., 1000., 0.], [1000., 1000., 1000.]])
 
         # Assign dummy values in this case
-        new_values['trajectorySep'] = 11.
-        new_values['trajectoryDot'] = 4.
+        new_values['trajSep'] = 11.
+        new_values['trajDot'] = 4.
 
     # For straight tracks algorithm
     tracking_hit_list = []
