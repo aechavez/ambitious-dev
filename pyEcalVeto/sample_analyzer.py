@@ -9,18 +9,72 @@ from modules import rootManager as manager
 cell_map = np.loadtxt('modules/cellModule.txt')
 r.gSystem.Load('libFramework.so')
 
-# Branch information for general ECal quantities
-branch_information = {
+# General ECal branch information
+ecal_branch_information = {
 
-    # Electron ECal scoring plane kinematics
-    'electronECalSPX':            {'dtype': float, 'default': 0.},
-    'electronECalSPY':            {'dtype': float, 'default': 0.},
-    'electronECalSPZ':            {'dtype': float, 'default': 0.},
-    'electronECalSPPX':           {'dtype': float, 'default': 0.},
-    'electronECalSPPY':           {'dtype': float, 'default': 0.},
-    'electronECalSPPZ':           {'dtype': float, 'default': 0.},
-    'electronECalSPPMag':         {'dtype': float, 'default': 0.},
-    'electronECalSPPTheta':       {'dtype': float, 'default': 0.},
+    # Event number
+    'eventNumber':                {'dtype': int,   'default': 0 },
+
+    # Simulated hit information
+    'simHitEnergy':               {'dtype': float, 'default': 0.},
+    'nSimHits':                   {'dtype': int,   'default': 0 },
+
+    # Reconstructed hit information
+    'recHitAmplitude':            {'dtype': float, 'default': 0.},
+    'recHitEnergy':               {'dtype': float, 'default': 0.},
+    'nRecHits':                   {'dtype': int,   'default': 0 },
+
+    # Noise information
+    'noiseHitEnergy':             {'dtype': float, 'default': 0.},
+    'nNoiseHits':                 {'dtype': int,   'default': 0 },
+
+    # Fiducial information
+    'electronIsFiducial':         {'dtype': int,   'default': 0 },
+    'photonIsFiducial':           {'dtype': int,   'default': 0 },
+
+    # Electron kinematics at target scoring plane
+    'electronIsAtTargSP':         {'dtype': int,   'default': 0 },
+    'electronTargSP_x':           {'dtype': float, 'default': 0.},
+    'electronTargSP_y':           {'dtype': float, 'default': 0.},
+    'electronTargSP_z':           {'dtype': float, 'default': 0.},
+    'electronTargSP_px':          {'dtype': float, 'default': 0.},
+    'electronTargSP_py':          {'dtype': float, 'default': 0.},
+    'electronTargSP_pz':          {'dtype': float, 'default': 0.},
+    'electronTargSP_pmag':        {'dtype': float, 'default': 0.},
+    'electronTargSP_ptheta':      {'dtype': float, 'default': 0.},
+
+    # Electron kinematics at ECal scoring plane
+    'electronIsAtECalSP':         {'dtype': int,   'default': 0 },
+    'electronECalSP_x':           {'dtype': float, 'default': 0.},
+    'electronECalSP_y':           {'dtype': float, 'default': 0.},
+    'electronECalSP_z':           {'dtype': float, 'default': 0.},
+    'electronECalSP_px':          {'dtype': float, 'default': 0.},
+    'electronECalSP_py':          {'dtype': float, 'default': 0.},
+    'electronECalSP_pz':          {'dtype': float, 'default': 0.},
+    'electronECalSP_pmag':        {'dtype': float, 'default': 0.},
+    'electronECalSP_ptheta':      {'dtype': float, 'default': 0.},
+
+    # Photon kinematics at target scoring plane
+    'photonIsAtTargSP':           {'dtype': int,   'default': 0 },
+    'photonTargSP_x':             {'dtype': float, 'default': 0.},
+    'photonTargSP_y':             {'dtype': float, 'default': 0.},
+    'photonTargSP_z':             {'dtype': float, 'default': 0.},
+    'photonTargSP_px':            {'dtype': float, 'default': 0.},
+    'photonTargSP_py':            {'dtype': float, 'default': 0.},
+    'photonTargSP_pz':            {'dtype': float, 'default': 0.},
+    'photonTargSP_pmag':          {'dtype': float, 'default': 0.},
+    'photonTargSP_ptheta':        {'dtype': float, 'default': 0.},
+
+    # Photon kinematics at ECal scoring plane
+    'photonIsAtECalSP':           {'dtype': int,   'default': 0 },
+    'photonECalSP_x':             {'dtype': float, 'default': 0.},
+    'photonECalSP_y':             {'dtype': float, 'default': 0.},
+    'photonECalSP_z':             {'dtype': float, 'default': 0.},
+    'photonECalSP_px':            {'dtype': float, 'default': 0.},
+    'photonECalSP_py':            {'dtype': float, 'default': 0.},
+    'photonECalSP_pz':            {'dtype': float, 'default': 0.},
+    'photonECalSP_pmag':          {'dtype': float, 'default': 0.},
+    'photonECalSP_ptheta':        {'dtype': float, 'default': 0.},
 
     # Fernand variables
     'nReadoutHits':               {'dtype': int,   'default': 0 },
@@ -45,67 +99,114 @@ branch_information = {
     'nElectronTerritoryHits':     {'dtype': int,   'default': 0 },
     'nPhotonTerritoryHits':       {'dtype': int,   'default': 0 },
     'territoryRatio':             {'dtype': float, 'default': 1.},
-    'trajectorySep':              {'dtype': float, 'default': 0.},
-    'trajectoryDot':              {'dtype': float, 'default': 0.}
+    'trajSep':                    {'dtype': float, 'default': 0.},
+    'trajDot':                    {'dtype': float, 'default': 0.}
 }
 
 for i in range(1, physTools.nregions + 1):
 
     # Electron RoC variables
-    branches_info['electronContainmentEnergy_x{}'.format(i)] = {'rtype': float, 'default': 0.}
+    ecal_branch_information['electronContainmentEnergy_x{}'.format(i)] = {'rtype': float, 'default': 0.}
 
     # Photon RoC variables
-    branches_info['photonContainmentEnergy_x{}'.format(i)]   = {'rtype': float, 'default': 0.}
+    ecal_branch_information['photonContainmentEnergy_x{}'.format(i)]   = {'rtype': float, 'default': 0.}
 
     # Outside RoC variables
-    branches_info['outsideContainmentEnergy_x{}'.format(i)]  = {'rtype': float, 'default': 0.}
-    branches_info['outsideContainmentNHits_x{}'.format(i)]   = {'rtype': int,   'default': 0 }
-    branches_info['outsideContainmentXStd_x{}'.format(i)]    = {'rtype': float, 'default': 0.}
-    branches_info['outsideContainmentYStd_x{}'.format(i)]    = {'rtype': float, 'default': 0.}
+    ecal_branch_information['outsideContainmentEnergy_x{}'.format(i)]  = {'rtype': float, 'default': 0.}
+    ecal_branch_information['outsideContainmentNHits_x{}'.format(i)]   = {'rtype': int,   'default': 0 }
+    ecal_branch_information['outsideContainmentXStd_x{}'.format(i)]    = {'rtype': float, 'default': 0.}
+    ecal_branch_information['outsideContainmentYStd_x{}'.format(i)]    = {'rtype': float, 'default': 0.}
 
 for i in range(1, physTools.nsegments + 1):
 
     # Longitudinal segment variables
-    branch_information['energy_s{}'.format(i)]    = {'dtype': float, 'default': 0.}
-    branch_information['nHits_s{}'.format(i)]     = {'dtype': int,   'default': 0 }
-    branch_information['xMean_s{}'.format(i)]     = {'dtype': float, 'default': 0.}
-    branch_information['yMean_s{}'.format(i)]     = {'dtype': float, 'default': 0.}
-    branch_information['layerMean_s{}'.format(i)] = {'dtype': float, 'default': 0.}
-    branch_information['xStd_s{}'.format(i)]      = {'dtype': float, 'default': 0.}
-    branch_information['yStd_s{}'.format(i)]      = {'dtype': float, 'default': 0.}
-    branch_information['layerStd_s{}'.format(i)]  = {'dtype': float, 'default': 0.}
+    ecal_branch_information['energy_s{}'.format(i)]    = {'dtype': float, 'default': 0.}
+    ecal_branch_information['nHits_s{}'.format(i)]     = {'dtype': int,   'default': 0 }
+    ecal_branch_information['xMean_s{}'.format(i)]     = {'dtype': float, 'default': 0.}
+    ecal_branch_information['yMean_s{}'.format(i)]     = {'dtype': float, 'default': 0.}
+    ecal_branch_information['layerMean_s{}'.format(i)] = {'dtype': float, 'default': 0.}
+    ecal_branch_information['xStd_s{}'.format(i)]      = {'dtype': float, 'default': 0.}
+    ecal_branch_information['yStd_s{}'.format(i)]      = {'dtype': float, 'default': 0.}
+    ecal_branch_information['layerStd_s{}'.format(i)]  = {'dtype': float, 'default': 0.}
 
     for j in range(1, physTools.nregions + 1):
 
         # Electron RoC variables
-        branch_information['electronContainmentEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
-        branch_information['electronContainmentNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
-        branch_information['electronContainmentXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['electronContainmentYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['electronContainmentLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
-        branch_information['electronContainmentXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['electronContainmentYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['electronContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
+        ecal_branch_information['electronContainmentEnergy_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
+        ecal_branch_information['electronContainmentNHits_x{}_s{}'.format(j, i)]     = {'dtype': int,   'default': 0 }
+        ecal_branch_information['electronContainmentXMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        ecal_branch_information['electronContainmentYMean_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        ecal_branch_information['electronContainmentLayerMean_x{}_s{}'.format(j, i)] = {'dtype': float, 'default': 0.}
+        ecal_branch_information['electronContainmentXStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        ecal_branch_information['electronContainmentYStd_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        ecal_branch_information['electronContainmentLayerStd_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
 
         # Photon RoC variables
-        branch_information['photonContainmentEnergy_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentNHits_x{}_s{}'.format(j, i)]       = {'dtype': int,   'default': 0 }
-        branch_information['photonContainmentXMean_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentYMean_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentLayerMean_x{}_s{}'.format(j, i)]   = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentXStd_x{}_s{}'.format(j, i)]        = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentYStd_x{}_s{}'.format(j, i)]        = {'dtype': float, 'default': 0.}
-        branch_information['photonContainmentLayerStd_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
+        ecal_branch_information['photonContainmentEnergy_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        ecal_branch_information['photonContainmentNHits_x{}_s{}'.format(j, i)]       = {'dtype': int,   'default': 0 }
+        ecal_branch_information['photonContainmentXMean_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
+        ecal_branch_information['photonContainmentYMean_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
+        ecal_branch_information['photonContainmentLayerMean_x{}_s{}'.format(j, i)]   = {'dtype': float, 'default': 0.}
+        ecal_branch_information['photonContainmentXStd_x{}_s{}'.format(j, i)]        = {'dtype': float, 'default': 0.}
+        ecal_branch_information['photonContainmentYStd_x{}_s{}'.format(j, i)]        = {'dtype': float, 'default': 0.}
+        ecal_branch_information['photonContainmentLayerStd_x{}_s{}'.format(j, i)]    = {'dtype': float, 'default': 0.}
 
         # Outside RoC variables
-        branch_information['outsideContainmentEnergy_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentNHits_x{}_s{}'.format(j, i)]      = {'dtype': int,   'default': 0 }
-        branch_information['outsideContainmentXMean_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentYMean_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentLayerMean_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentXStd_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentYStd_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
-        branch_information['outsideContainmentLayerStd_x{}_s{}'.format(j, i)]   = {'dtype': float, 'default': 0.}
+        ecal_branch_information['outsideContainmentEnergy_x{}_s{}'.format(j, i)]     = {'dtype': float, 'default': 0.}
+        ecal_branch_information['outsideContainmentNHits_x{}_s{}'.format(j, i)]      = {'dtype': int,   'default': 0 }
+        ecal_branch_information['outsideContainmentXMean_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        ecal_branch_information['outsideContainmentYMean_x{}_s{}'.format(j, i)]      = {'dtype': float, 'default': 0.}
+        ecal_branch_information['outsideContainmentLayerMean_x{}_s{}'.format(j, i)]  = {'dtype': float, 'default': 0.}
+        ecal_branch_information['outsideContainmentXStd_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
+        ecal_branch_information['outsideContainmentYStd_x{}_s{}'.format(j, i)]       = {'dtype': float, 'default': 0.}
+        ecal_branch_information['outsideContainmentLayerStd_x{}_s{}'.format(j, i)]   = {'dtype': float, 'default': 0.}
+
+# Simulated particle branch informtion
+sim_particle_branch_information = {
+    'pdgID':      {'address': np.zeros(1, dtype = int  ), 'rtype': int  },
+    'trackID':    {'address': np.zeros(1, dtype = int  ), 'rtype': int  },
+    'mass':       {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'charge':     {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'energy':     {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'vert_x':     {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'vert_y':     {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'vert_z':     {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'end_x':      {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'end_y':      {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'end_z':      {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'px':         {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'py':         {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'pz':         {'address': np.zeros(1, dtype = float), 'rtype': float},
+    'nParents':   {'address': np.zeros(1, dtype = int  ), 'rtype': int  },
+    'nDaughters': {'address': np.zeros(1, dtype = int  ), 'rtype': int  }
+}
+for branch_name in ecal_branch_information:
+    sim_particle_branch_information[branch_name] = {'dtype': ecal_branch_information[branch_name]['dtype'],\
+                                                    'address': np.zeros(1, dtype = ecal_branch_information[branch_name]['dtype'])}
+
+# Simulated hit branch informtion
+sim_hit_branch_information = {
+    'energy': {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'x':      {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'y':      {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'z':      {'dtype': float, 'address': np.zeros(1, dtype = float)}
+}
+for branch_name in ecal_branch_information:
+    sim_hit_branch_information[branch_name] = {'dtype': ecal_branch_information[branch_name]['dtype'],\
+                                               'address': np.zeros(1, dtype = ecal_branch_information[branch_name]['dtype'])}
+
+# Reconstructed hit branch information
+rec_hit_branch_information = {
+    'amplitude':         {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'energy':            {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'matchingSimEnergy': {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'x':                 {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'y':                 {'dtype': float, 'address': np.zeros(1, dtype = float)},
+    'z':                 {'dtype': float, 'address': np.zeros(1, dtype = float)}
+}
+for branch_name in ecal_branch_information:
+    rec_hit_branch_information[branch_name] = {'dtype': ecal_branch_information[branch_name]['dtype'],\
+                                               'address': np.zeros(1, dtype = ecal_branch_information[branch_name]['dtype'])}
 
 
 ###########################
@@ -189,7 +290,7 @@ def process_event(self):
     ###########################################
 
     # Get the electron at the target scoring plane
-    ele_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hits)
+    ele_target_sp_hit = physTools.get_ele_targ_sp_hit(self.target_sp_hits)
 
     if not (ele_target_sp_hit is None):
         ele_target_sp_pos = physTools.get_position(ele_target_sp_hit)
@@ -199,7 +300,7 @@ def process_event(self):
         ele_target_sp_pos = ele_target_sp_mom = np.zeros(3)
 
     # Get the electron at the ECal scoring plane
-    ele_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
+    ele_ecal_sp_hit = physTools.get_ele_ecal_sp_hit(self.ecal_sp_hits)
 
     if not (ele_ecal_sp_hit is None):
         ele_ecal_sp_pos = physTools.get_position(ele_ecal_sp_hit)
@@ -210,7 +311,7 @@ def process_event(self):
 
     # Infer the photon's information at the target scoring plane
     if not (ele_target_sp_hit is None):
-        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_target_sp_hit(ele_target_sp_hit)
+        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_pho_targ_sp_hit(ele_target_sp_hit)
     else:
         pho_target_sp_pos = pho_target_sp_mom = np.zeros(3)
 
@@ -273,8 +374,8 @@ def process_event(self):
         ele_traj_vec = physTools.normalize(ele_traj_ends[1] - ele_traj_ends[0])
         pho_traj_vec = physTools.normalize(pho_traj_ends[1] - pho_traj_ends[0])
 
-        new_values['trajectorySep'] = physTools.distance(ele_traj_ends[0], pho_traj_ends[0])
-        new_values['trajectoryDot'] = np.dot(ele_traj_vec, pho_traj_vec)
+        new_values['trajSep'] = physTools.distance(ele_traj_ends[0], pho_traj_ends[0])
+        new_values['trajDot'] = np.dot(ele_traj_vec, pho_traj_vec)
     else:
 
         # One of the trajectories is missing, so use all of the hits in the ECal for MIP tracking
@@ -283,8 +384,8 @@ def process_event(self):
         pho_traj_ends = np.array([[1000., 1000., 0.], [1000., 1000., 1000.]])
 
         # Assign dummy values in this case
-        new_values['trajectorySep'] = 11.
-        new_values['trajectoryDot'] = 4.
+        new_values['trajSep'] = 11.
+        new_values['trajDot'] = 4.
 
     # For straight tracks algorithm
     tracking_hit_list = []
@@ -521,6 +622,10 @@ def process_event(self):
     # Find straight tracks
     new_values['nStraightTracks'], tracking_hit_list = mipTracking.findStraightTracks(tracking_hit_list, ele_traj_ends,\
                                                                                       pho_traj_ends, mst = 4, returnHitList = True)
+
+    ######################
+    # Fill trees
+    ######################
 
     # Fill the branches of each tree model with new values
     if not self.separate_categories:
