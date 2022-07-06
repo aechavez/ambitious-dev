@@ -405,6 +405,14 @@ def process_event(self):
     new_values['deepestLayerHit'] = self.ecal_veto.getDeepestLayerHit() 
     new_values['ecalBackEnergy'] = self.ecal_veto.getEcalBackEnergy()
 
+    for i in range(0, physTools.nregions):
+        new_values['electronContainmentEnergy_x{}'.format(i + 1)] = self.ecalVeto.getElectronContainmentEnergy()[i]
+        new_values['photonContainmentEnergy_x{}'.format(i + 1)] = self.ecalVeto.getPhotonContainmentEnergy()[i]
+        new_values['outsideContainmentEnergy_x{}'.format(i + 1)] = self.ecalVeto.getOutsideContainmentEnergy()[i]
+        new_values['outsideContainmentNHits_x{}'.format(i + 1)] = self.ecalVeto.getOutsideContainmentNHits()[i]
+        new_values['outsideContainmentXStd_x{}'.format(i + 1)] = self.ecalVeto.getOutsideContainmentXStd()[i]
+        new_values['outsideContainmentYStd_x{}'.format(i + 1)] = self.ecalVeto.getOutsideContainmentYStd()[i]
+
 
     ###############################
     # MIP tracking set up
@@ -670,6 +678,25 @@ def process_event(self):
     # Find straight tracks
     new_values['nStraightTracks'], tracking_hit_list = mipTracking.findStraightTracks(tracking_hit_list, ele_traj_ends,\
                                                                                       pho_traj_ends, mst = 4, returnHitList = True)
+
+    ######################################
+    # Needed for sample analysis
+    ######################################
+
+    # Event number
+    new_values['eventNumber'] = self.eventHeader.getEventNumber()
+
+    # Simulated hit information
+    for hit in self.ecal_sim_hits:
+        new_values['simHitEnergyDep'] += hit.getEdep()
+        new_values['nSimHits'] += 1
+
+    # Reconstructed hit information
+    for hit in self.ecal_rec_hits:
+        new_values['recHitAmplitude'] += hit.getAmplitude()
+        new_values['recHitEnergy'] += hit.getEnergy()
+        new_values['nRecHits'] += 1
+
 
     ######################
     # Fill trees
