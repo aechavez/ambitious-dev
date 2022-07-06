@@ -86,8 +86,8 @@ class EventContainer:
                 event.nElectronTerritoryHits            ,
                 event.nPhotonTerritoryHits              ,
                 event.territoryRatio                    ,
-                event.trajectorySep                     ,
-                event.trajectoryDot                     ,
+                event.trajSep                           ,
+                event.trajDot                           ,
 
                 # Longitudinal segment variables
                 event.energy_s1                         ,
