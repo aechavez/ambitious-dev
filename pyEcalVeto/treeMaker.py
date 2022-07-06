@@ -165,7 +165,7 @@ def process_event(self):
     ###########################################
 
     # Get the electron at the target scoring plane
-    ele_target_sp_hit = physTools.get_electron_target_sp_hit(self.target_sp_hits)
+    ele_target_sp_hit = physTools.get_ele_targ_sp_hit(self.target_sp_hits)
 
     if not (ele_target_sp_hit is None):
         ele_target_sp_pos = physTools.get_position(ele_target_sp_hit)
@@ -175,7 +175,7 @@ def process_event(self):
         ele_target_sp_pos = ele_target_sp_mom = np.zeros(3)
 
     # Get the electron at the ECal scoring plane
-    ele_ecal_sp_hit = physTools.get_electron_ecal_sp_hit(self.ecal_sp_hits)
+    ele_ecal_sp_hit = physTools.get_ele_ecal_sp_hit(self.ecal_sp_hits)
 
     if not (ele_ecal_sp_hit is None):
         ele_ecal_sp_pos = physTools.get_position(ele_ecal_sp_hit)
@@ -186,7 +186,7 @@ def process_event(self):
 
     # Infer the photon's information at the target scoring plane
     if not (ele_target_sp_hit is None):
-        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_photon_target_sp_hit(ele_target_sp_hit)
+        pho_target_sp_pos, pho_target_sp_mom = physTools.infer_pho_targ_sp_hit(ele_target_sp_hit)
     else:
         pho_target_sp_pos = pho_target_sp_mom = np.zeros(3)
 
@@ -497,6 +497,10 @@ def process_event(self):
     # Find straight tracks
     new_values['nStraightTracks'], tracking_hit_list = mipTracking.findStraightTracks(tracking_hit_list, ele_traj_ends,\
                                                                                       pho_traj_ends, mst = 4, returnHitList = True)
+
+    ######################
+    # Fill trees
+    ######################
 
     # Fill the branches of each tree model with new values
     if not self.separate_categories:
