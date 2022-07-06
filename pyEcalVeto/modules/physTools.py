@@ -386,7 +386,7 @@ def project(x, u, z):
 
     return np.array([x2, y2, z2])
 
-# Function to get projected XY-intercepts
+# Function to get projected xy-intercepts
 def get_intercepts(x, u, zs):
 
     return np.array([project(x, u, z)[0:2] for z in zs])
@@ -444,32 +444,32 @@ def angle(u, v, units = 'radians'):
 # Hit ID information
 ##############################
 
-# Function to get the layer ID of a ECalHit
+# Function to get the layer ID of a ECal hit
 def get_ecal_layer(hit):
 
     return (hit.getID() >> ecal_LAYER_SHIFT) & ecal_LAYER_MASK
 
-# Function to get the module ID of a ECalHit
+# Function to get the module ID of a ECal hit
 def get_ecal_module(hit):
 
     return (hit.getID() >> ecal_MODULE_SHIFT) & ecal_MODULE_MASK
 
-# Function to get the cell ID of a ECalHit
+# Function to get the cell ID of a ECal hit
 def get_ecal_cell(hit):
 
     return (hit.getID() >> ecal_CELL_SHIFT) & ecal_CELL_MASK
 
-# Function to get the section ID of a HCalHit
+# Function to get the section ID of a HCal hit
 def get_hcal_section(hit):
 
     return (hit.getID() >> hcal_SECTION_SHIFT) & hcal_SECTION_MASK
 
-# Function to get the layer ID of a HCalHit
+# Function to get the layer ID of a HCal hit
 def get_hcal_layer(hit):
 
     return (hit.getID() >> hcal_LAYER_SHIFT) & hcal_LAYER_MASK
 
-# Function to get the strip ID of a HCalHit
+# Function to get the strip ID of a HCal hit
 def get_hcal_strip(hit):
 
     return (hit.getID() >> hcal_STRIP_SHIFT) & hcal_STRIP_MASK
