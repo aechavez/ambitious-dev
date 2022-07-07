@@ -28,10 +28,6 @@ ecal_branch_information = {
     'noiseHitEnergy':             {'dtype': float, 'default': 0.},
     'nNoiseHits':                 {'dtype': int,   'default': 0 },
 
-    # Fiducial information
-    'electronIsFiducial':         {'dtype': int,   'default': 0 },
-    'photonIsFiducial':           {'dtype': int,   'default': 0 },
-
     # Electron kinematics at target scoring plane
     'electronIsAtTargSP':         {'dtype': int,   'default': 0 },
     'electronTargSP_x':           {'dtype': float, 'default': 0.},
@@ -75,6 +71,10 @@ ecal_branch_information = {
     'photonECalSP_pz':            {'dtype': float, 'default': 0.},
     'photonECalSP_pmag':          {'dtype': float, 'default': 0.},
     'photonECalSP_ptheta':        {'dtype': float, 'default': 0.},
+
+    # Fiducial information
+    'electronIsFiducial':         {'dtype': int,   'default': 0 },
+    'photonIsFiducial':           {'dtype': int,   'default': 0 },
 
     # Fernand variables
     'nReadoutHits':               {'dtype': int,   'default': 0 },
@@ -303,10 +303,12 @@ def main():
 
         # Set closing functions
         process.closing_functions = []
+
         for tree_model in process.tree_models:
             process.closing_functions.append(process.sim_particles.Write)
             process.closing_functions.append(process.sim_hits.Write)
             process.closing_functions.append(process.rec_hits.Write)
+
         for tree_model in process.tree_models:
             process.closing_functions.append(process.tree_models[tree_model].write)
 
@@ -679,16 +681,17 @@ def process_event(self):
     new_values['nStraightTracks'], tracking_hit_list = mipTracking.findStraightTracks(tracking_hit_list, ele_traj_ends,\
                                                                                       pho_traj_ends, mst = 4, returnHitList = True)
 
-    ######################################
-    # Needed for sample analysis
-    ######################################
+
+    ########################################################
+    # General ECal information for sample analysis
+    ########################################################
 
     # Event number
     new_values['eventNumber'] = self.eventHeader.getEventNumber()
 
     # Simulated hit information
     for hit in self.ecal_sim_hits:
-        new_values['simHitEnergyDep'] += hit.getEdep()
+        new_values['simHitEnergy'] += hit.getEdep()
         new_values['nSimHits'] += 1
 
     # Reconstructed hit information
@@ -696,6 +699,59 @@ def process_event(self):
         new_values['recHitAmplitude'] += hit.getAmplitude()
         new_values['recHitEnergy'] += hit.getEnergy()
         new_values['nRecHits'] += 1
+
+    # Sorted copies of reconstructed/simulated hits to use some shortcuts
+    sorted_ecal_rec_hits = [hit for hit in self.ecal_rec_hits]
+    sorted_ecal_sim_hits = [hit for hit in self.ecal_sim_hits]
+    sorted_ecal_rec_hits.sort(key = lambda hit : hit.getID())
+    sorted_ecal_sim_hits.sort(key = lambda hit : hit.getID())
+
+    # Noise hit information
+    for rec_hit in sorted_ecal_rec_hits:
+
+        # Count the hit as a noise hit if the noise flag is set
+        if rec_hit.isNoise():
+            new_values['noiseHitEnergy'] += rec_hit.getEnergy()
+            new_values['nNoiseHits'] += 1
+
+        # Otherwise check for a simulated hit whose ID matches
+        else:
+
+            nmatch = 0
+            for sim_hit in sorted_ecal_sim_hits:
+                if sim_hit.getID() == rec_hit.getID(): nmatch += 1
+                elif sim_hit.getID() > rec_hit.getID(): break
+
+            # Count the hit as a noise hit if no matching hit exists
+            if nmatch == 0:
+                new_values['noiseHitEnergy'] += rec_hit.getEnergy()
+                new_values['nNoiseHits'] += 1
+
+
+    #############################################################
+    # Reconstructed hit information for sample analysis
+    #############################################################
+
+    for hit in self.ecal_rec_hits:
+
+        rec_hit_branch_information['amplitude']['address'][0] = hit.getAmplitude()
+        rec_hit_branch_information['energy']['address'][0] = hit.getEnergy()
+        rec_hit_branch_information['x']['address'][0] = hit.getXPos()
+        rec_hit_branch_information['y']['address'][0] = hit.getYPos()
+        rec_hit_branch_information['z']['address'][0] = hit.getZPos()
+
+        matching_edep = 0
+        for sim_hit in self.ecal_sim_hits:
+
+            if sim_hit.getID() == hit.getID():
+                matching_edep += sim_hit.getEdep()
+
+        rec_hit_branch_information['matchingSimEnergy']['address'][0] = matching_edep
+
+        for branch_name in ecal_branch_information:
+            rec_hit_branch_information[branch_name]['address'][0] = new_values[branch_name]
+
+        self.rec_hits.Fill()
 
 
     ######################
