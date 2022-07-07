@@ -727,6 +727,130 @@ def process_event(self):
                 new_values['noiseHitEnergy'] += rec_hit.getEnergy()
                 new_values['nNoiseHits'] += 1
 
+    # Electron kinematics at the target scoring plane
+    if not (ele_target_sp_hit is None):
+
+        new_values['electronIsAtTargSP'] = 1
+        new_values['electronTargSP_x'] = ele_target_sp_pos[0]
+        new_values['electronTargSP_y'] = ele_target_sp_pos[1]
+        new_values['electronTargSP_z'] = ele_target_sp_pos[2]
+        new_values['electronTargSP_px'] = ele_target_sp_mom[0]
+        new_values['electronTargSP_py'] = ele_target_sp_mom[1]
+        new_values['electronTargSP_pz'] = ele_target_sp_mom[2]
+        new_values['electronTargSP_pmag'] = np.linalg.norm(ele_target_sp_mom)
+        new_values['electronTargSP_ptheta'] = physTools.angle(ele_target_sp_mom, np.array([0, 0, 1]), unit = 'degrees')
+
+    # Electron kinematics at the ECal scoring plane
+    if not (ele_ecal_sp_hit is None):
+
+        new_values['electronIsAtECalSP'] = 1
+        new_values['electronECalSP_x'] = ele_ecal_sp_pos[0]
+        new_values['electronECalSP_y'] = ele_ecal_sp_pos[1]
+        new_values['electronECalSP_z'] = ele_ecal_sp_pos[2]
+        new_values['electronECalSP_px'] = ele_ecal_sp_mom[0]
+        new_values['electronECalSP_py'] = ele_ecal_sp_mom[1]
+        new_values['electronECalSP_pz'] = ele_ecal_sp_mom[2]
+        new_values['electronECalSP_pmag'] = np.linalg.norm(ele_ecal_sp_mom)
+        new_values['electronECalSP_ptheta'] = physTools.angle(ele_ecal_sp_mom, np.array([0, 0, 1]), unit = 'degrees')
+
+    # Get the photon at the target scoring plane
+    pho_target_sp_hit_true = physTools.get_pho_targ_sp_hit(self.target_sp_hits)
+
+    if not (pho_target_sp_hit_true is None):
+        pho_target_sp_pos_true = physTools.get_position(pho_target_sp_hit_true)
+        pho_target_sp_mom_true = physTools.get_momentum(pho_target_sp_hit_true)
+    else:
+        pho_target_sp_pos_true = pho_target_sp_mom_true = np.zeros(3)
+
+    # Get the photon at the ECal scoring plane
+    pho_ecal_sp_hit_true = physTools.get_pho_ecal_sp_hit(self.ecal_sp_hits)
+
+    if not (pho_ecal_sp_hit_true is None):
+        pho_ecal_sp_pos_true = physTools.get_position(pho_ecal_sp_hit_true)
+        pho_ecal_sp_mom_true = physTools.get_momentum(pho_ecal_sp_hit_true)
+    else:
+        pho_ecal_sp_pos_true = pho_ecal_sp_mom_true = np.zeros(3)
+
+    # Photon kinematics at the target scoring plane
+    if not (pho_target_sp_hit_true is None):
+
+        new_values['photonIsAtTargSP'] = 1
+        new_values['photonTargSP_x'] = pho_target_sp_pos_true[0]
+        new_values['photonTargSP_y'] = pho_target_sp_pos_true[1]
+        new_values['photonTargSP_z'] = pho_target_sp_pos_true[2]
+        new_values['photonTargSP_px'] = pho_target_sp_mom_true[0]
+        new_values['photonTargSP_py'] = pho_target_sp_mom_true[1]
+        new_values['photonTargSP_pz'] = pho_target_sp_mom_true[2]
+        new_values['photonTargSP_pmag'] = np.linalg.norm(pho_target_sp_mom_true)
+        new_values['photonTargSP_ptheta'] = physTools.angle(pho_target_sp_mom_true, np.array([0, 0, 1]), unit = 'degrees')
+
+    # Photon kinematics at the ECal scoring plane
+    if not (pho_ecal_sp_hit_true is None):
+
+        new_values['photonIsAtECalSP'] = 1
+        new_values['photonECalSP_x'] = pho_ecal_sp_pos_true[0]
+        new_values['photonECalSP_y'] = pho_ecal_sp_pos_true[1]
+        new_values['photonECalSP_z'] = pho_ecal_sp_pos_true[2]
+        new_values['photonECalSP_px'] = pho_ecal_sp_mom_true[0]
+        new_values['photonECalSP_py'] = pho_ecal_sp_mom_true[1]
+        new_values['photonECalSP_pz'] = pho_ecal_sp_mom_true[2]
+        new_values['photonECalSP_pmag'] = np.linalg.norm(pho_ecal_sp_mom_true)
+        new_values['photonECalSP_ptheta'] = physTools.angle(pho_ecal_sp_mom_true, np.array([0, 0, 1]), unit = 'degrees')
+
+    # Electron fiducial information
+    fid_ele_true = 0
+
+    if not (ele_ecal_sp_hit is None):
+
+        slope_xz = 999
+        if ele_ecal_sp_mom[0] != 0:
+            slope_xz = ele_ecal_sp_mom[2]/ele_ecal_sp_mom[0]
+
+        fx = (physTools.ecal_layerZs[0] - ele_ecal_sp_pos[2])/slope_xz + ele_ecal_sp_pos[0]
+
+        slope_yz = 999
+        if ele_ecal_sp_mom[1] != 0:
+            slope_yz = ele_ecal_sp_mom[2]/ele_ecal_sp_mom[1]
+
+        fy = (physTools.ecal_layerZs[0] - ele_ecal_sp_pos[2])/slope_yz + ele_ecal_sp_pos[1]
+
+        for cell in cell_map:
+
+            cell_dist = physTools.distance(np.array([fx, fy]), np.array([cell[1], cell[2]]))
+
+            if cell_dist <= physTools.cell_radius:
+                fid_ele_true = 1
+                break
+
+    new_values['electronIsFiducial'] = fid_ele_true
+
+    # Photon fiducial information
+    fid_pho_true = 0
+
+    if not (pho_ecal_sp_hit_true is None):
+
+        slope_xz = 999
+        if pho_ecal_sp_mom_true[0] != 0:
+            slope_xz = pho_ecal_sp_mom_true[2]/pho_ecal_sp_mom_true[0]
+
+        fx = (physTools.ecal_layerZs[0] - pho_ecal_sp_pos_true[2])/slope_xz + pho_ecal_sp_pos_true[0]
+
+        slope_yz = 999
+        if pho_ecal_sp_mom_true[1] != 0:
+            slope_yz = pho_ecal_sp_mom_true[2]/pho_ecal_sp_mom_true[1]
+
+        fy = (physTools.ecal_layerZs[0] - pho_ecal_sp_pos_true[2])/slope_yz + pho_ecal_sp_pos_true[1]
+
+        for cell in cell_map:
+
+            cell_dist = physTools.distance(np.array([fx, fy]), np.array([cell[1], cell[2]]))
+
+            if cell_dist <= physTools.cell_radius:
+                fid_pho_true = 1
+                break
+
+    new_values['photonIsFiducial'] = fid_pho_true
+
 
     ##############################################################
     # Simulated particle information for sample analysis
